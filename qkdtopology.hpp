@@ -8,40 +8,53 @@
 #include <algorithm>
 
 #include "common.hpp"
+#include "qkdnetwork.hpp"
+#include "qkdrequestgen.hpp"
 
+// что делать, если вершина осталась без ребер?
 class Vertex
 {
+    friend std::ostream& operator<< ( std::ostream& os, const Vertex& v );
+
 	private:
 
-		// установка значения последнего id происходит 
-		// при инициализации QKD_Topology 
-		static INT_ID last_vertex_id; 
-		const INT_ID id;
+        common::Id id;
 
-    Vertex() = default;
+        Vertex ( common::Id id );  // для возвращения вектора с id = -1
+                                   // (сигнализирует "не найдено" при 
+                                   // использовании getVertexById() )
 
-    std::ostream& operator<< (std::ostream& os);
+	public:
+
+        static inline common::Id last_vertex_id = 0; // inline, т.к. запрещена
+                                                  // инициализация static-полей
+        bool operator== ( const Vertex& v2 );
 };
 
 class Edge 
 {
+    friend std::ostream& operator<< ( std::ostream& os, const Edge& e );
+
 	private:
 
-		static INT_ID last_edge_id;
-		INT_ID id;
+        common::Id id;
+        // правильное удаление производят deleteEdge() и deleteVertex()
+        Vertex& first;
+        Vertex& second;
 
-		std::shared_ptr<Vertex> first;
-		std::shared_ptr<Vertex> second;  // новая вершина всегда second
-		
-		Edge () = delete;
-		Edge (Vertex& v1, Vertex& v2);
+        Edge () = delete;
+        Edge ( Vertex& v1, Vertex& v2 );
+        
+    public:
 
-		bool hasVertex(Vertex& v);
-		bool hasVertices(Vertex& v1, Vertex& v2);
+        static inline common::Id last_edge_id = 0;
+        
+        bool hasVertex( Vertex& v );
+        bool hasVertices( Vertex& v1, Vertex& v2 );
 
         void reverse();
 
-		std::ostream& operator<< (std::ostream& os);
+        bool operator== ( const Edge& e2 );
 };
 
 class QKD_Topology
@@ -49,22 +62,35 @@ class QKD_Topology
 	friend class Vertex;
 	friend class Edge;
 
+    friend std::ostream& operator<< (std::ostream& os, const QKD_Topology& t);
+
 	private:
 
-		std::vector< std::shared_ptr<Vertex> > mVertexList;	
-		std::vector< std::unique_ptr<Edge> > mEdgeList;
+        QKD_Network& mQKD_Network;
+
+        std::vector< std::shared_ptr< Vertex > > maVertexList;	
+        std::vector< std::shared_ptr< Edge > > maEdgeList;
+
+        std::vector< common::Id > maRemovedVertexIds;
+        std::vector< common::Id > maRemovedEdgeIds;
 
 	public:
 			
-		QKD_Topology () = default;
-		
-        Vertex addVertex();
-		Edge addEdge(Vertex& v1, Vertex& v2);
+        QKD_Topology ( QKD_Network& parent );
 
-        QKD_Topology& deleteVertex(Vertex& v);
-        QKD_Topology& deleteEdge(Edge& e);
+        Vertex& addVertex();
+        Edge& addEdge( Vertex& v1, Vertex& v2 );
 
-        std::ostream& operator<< (std::ostream& os);
+        void removeVertex( Vertex& v );
+        void removeEdge( Edge& e );
+
+        Vertex& getVertexById( common::Id id );
+        //Edge& getEdgeById(common::Id id);
 };
+
+// операторы вывода
+std::ostream& operator<< ( std::ostream& os, const Vertex& v );
+std::ostream& operator<< ( std::ostream& os, const Edge& e );
+std::ostream& operator<< ( std::ostream& os, const QKD_Topology& t );
 
 #endif  // QKDTOPOLOGY_HPP
