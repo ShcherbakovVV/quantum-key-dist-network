@@ -12,4 +12,6 @@ class QKD_KeyGenModel
     public:
 
         
-}
+};
+
+#endif  //  QKDKEYGENMODEL_HPP
