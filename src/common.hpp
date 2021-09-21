@@ -8,39 +8,38 @@
 namespace tools
 {
     template< typename Obj, std::signed_integral Rep >
-    struct IdType
+    struct Id
     {
         using obj_type = Obj;
         using value_type = Rep;
 
         value_type value; 
 
-        IdType ( value_type id ) : value {id} {};
+        Id () : value { 0 } {};
+        Id ( value_type id ) : value { id } {};
 
-        IdType& operator++ ()
+        Id& operator++ ()
         {
             ++ value;
             return *this;
         }
 
-        IdType& operator-- ()
+        Id& operator-- ()
         {
             -- value;
             return *this;
         }
 
-        template< typename Obj2, typename Obj2 >
-        bool operator== ( const IdType< Obj2, Rep2 >& id )
+        // добавить про конвертируемость
+        template< std::signed_integral Rep2 >
+        bool operator== ( const Id< Obj, Rep2 >& id )
         {
-            return std::is_same< obj_type, 
-                                 typename IdType< Obj2, Rep2 >::obj_type
-                               >::value
-                   && value == id.value;
+            return value == id.value;
         }
     };
 
     template< typename Obj, std::integral Rep >
-    std::ostream& operator<< ( std::ostream& os, const IdType< Obj, Rep >& id )
+    std::ostream& operator<< ( std::ostream& os, const Id< Obj, Rep >& id )
     {
         return os << id.value;
     }
@@ -67,7 +66,7 @@ namespace dclr
     template< std::floating_point Double >
         using MetricsType = Double;
     using Metrics = MetricsType< double >;
-    Metrics METRICS_INFINITY = std::numeric_limits< Metrics >::max();
+    static Metrics METRICS_INFINITY = std::numeric_limits< Metrics >::max();
 
 }  // namespace dclr
 

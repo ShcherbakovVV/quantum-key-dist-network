@@ -9,24 +9,25 @@
 
 class QKD_Node;
 
-using NodeId = tools::Id< QKD_Node, dclr::IdRep >;
-NodeId NODE_INVALID {-1};
+using NodeId = typename tools::Id< QKD_Node, dclr::IdRep >;
+static NodeId NODE_INVALID {-1};
 
 class QKD_Node
 {
+    using id_type = NodeId;
+    
     private:
         
         NodeId id;
 
-        //std::shared_ptr< Vertex > mpVertex; 
-        Vertex& mVertex;
+        std::shared_ptr< Vertex > mpVertex; 
 
         QKD_Node () = delete; 
-        QKD_Node ( Vertex&, std::string )
+        QKD_Node ( std::shared_ptr< Vertex >, std::string );
 
     public:
 
-        static inline dclr::Id last_node_id = 0;
+        static inline NodeId last_node_id = 0;
         std::string label;
 
         Vertex& getVertex();

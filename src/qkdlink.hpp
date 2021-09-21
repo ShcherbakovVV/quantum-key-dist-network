@@ -8,24 +8,25 @@
 
 class QKD_Link;
 
-using LinkId = tools::Id< QKD_Link, dclr::IdRep >;
-LinkId LINK_INVALID {-1};
+using LinkId = typename tools::Id< QKD_Link, dclr::IdRep >;
+static LinkId LINK_INVALID {-1};
 
 class QKD_Link
 {
+    using id_type = LinkId;
+    
     private:
         
         LinkId id;
 
-        //std::shared_ptr< Edge > mpEdge; 
-        Edge& mEdge;
-
+        std::shared_ptr< Edge > mpEdge; 
+        
         QKD_Link () = delete;
-        QKD_Link ( Edge&, dclr::Metrics );
+        QKD_Link ( std::shared_ptr< Edge >, dclr::Metrics );
 
     public:
 
-        static inline dclr::Id last_link_id = 0;
+        static inline LinkId last_link_id = 0;
         dclr::Metrics mMetrics;
 
         Edge& getEdge();

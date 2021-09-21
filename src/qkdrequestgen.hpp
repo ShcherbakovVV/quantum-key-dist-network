@@ -16,8 +16,8 @@ struct RequestType
 {
     using TimePoint = typename std::chrono::time_point< Clock >;
 
-	TimePoint gen_time;  
-	TimePoint exp_time;  
+    TimePoint gen_time;  
+    TimePoint exp_time;  
     VertexId start; 
     VertexId dest; 
 
@@ -32,8 +32,8 @@ template < typename Clock >
 RequestType< Clock >::RequestType
     ( TimePoint gen, TimePoint exp, VertexId s, VertexId d ) 
 :
-	gen_time { gen }, 
-	exp_time { exp },  
+    gen_time { gen }, 
+    exp_time { exp },  
     start { s },
     dest { d }
 {}
@@ -51,9 +51,9 @@ class QKD_RequestGen
 
     private:
     
-        NetworkModel& mQKD_Network;
+        const NetworkModel& mQKD_Network;
 
-        IntRNG& mIntRNG;
+        IntRNG mIntRNG;
         dclr::Duration mRequestAge;  // время жизни заявки - 1 минута
         VertexId mMaxVertexId;
     
@@ -61,63 +61,65 @@ class QKD_RequestGen
 
     public:
     
-        QKD_RequestGen ( NetworkModel&, dclr::Duration );
+        QKD_RequestGen () = delete;
+        QKD_RequestGen ( NetworkModel&, dclr::Duration age = 60000ms );
                                            
         const Request genRequest();
         void setRequestAge( dclr::Duration );
         void updMaxVertexId();
 };
 
-template < typename NetworkModel >
-QKD_RequestGen< NetworkModel >::QKD_RequestGen
-    ( NetworkModel& parent, dclr::Duration age = 60000ms ) 
+template < typename NetworkModel, typename IntRNG >
+QKD_RequestGen< NetworkModel, IntRNG >::QKD_RequestGen
+    ( NetworkModel& parent, dclr::Duration age ) 
 :
     mQKD_Network { parent },
     mRequestAge { age },
-    mMaxVertexId { Vertex::last_vertex_id },
-    mIntRNG { 0, Vertex::last_vertex_id }
+    mMaxVertexId { Vertex::last_vertex_id.value },
+    mIntRNG { 0, Vertex::last_vertex_id.value }
 {}
  
-template < typename NetworkModel >
-VertexId QKD_RequestGen< NetworkModel >::genRandomVertexId()
+template < typename NetworkModel, typename IntRNG >
+VertexId QKD_RequestGen< NetworkModel, IntRNG >::genRandomVertexId()
 {
-    bool b = true;
-    while (b)
+    VertexId res { mIntRNG() };
+    do
     {
-        b = false;  // отключаем итерацию
-        // static_cast на случай dclr::Id не являющегося int
-        VertexId res = static_cast< VertexId >( mIntRNG() ); 
-        for ( auto& p = mQKD_Network.mTopology.maRemovedVertexIdList.begin(); 
+        
+        for ( auto p = mQKD_Network.mTopology.maRemovedVertexIdList.begin(); 
               p != mQKD_Network.mTopology.maRemovedVertexIdList.end(); 
               ++ p )
         {
             if ( *p == res )
-                b = true; //сгенерированный id не подходит, итерируемся дальше
+                break;
+            res = mIntRNG();
         }
     }
+    while (true);
     return res;
 }
 
-template < typename NetworkModel >
-const typename QKD_RequestGen< NetworkModel >::Request 
-QKD_RequestGen< NetworkModel >::genRequest()
+template < typename NetworkModel, typename IntRNG >
+const typename QKD_RequestGen< NetworkModel, IntRNG >::Request 
+QKD_RequestGen< NetworkModel, IntRNG >::genRequest()
 {
     VertexId start = genRandomVertexId();     
     VertexId dest = genRandomVertexId();
-    TimePoint now = mQKD_Network.mClock::now();
+    typename QKD_RequestGen< NetworkModel, IntRNG >::Request::TimePoint now =
+        mQKD_Network.now();
     return Request { now, now + mRequestAge, start, dest };   
 }
 
-template < typename NetworkModel >
-void QKD_RequestGen< NetworkModel >::setRequestAge( dclr::Duration age )
+template < typename NetworkModel, typename IntRNG >
+void QKD_RequestGen<NetworkModel, IntRNG>::setRequestAge( dclr::Duration age )
 {
     mRequestAge = age; 
 }
 
-template < typename NetworkModel >
-void QKD_RequestGen< NetworkModel >::updMaxVertexId()
+template < typename NetworkModel, typename IntRNG >
+void QKD_RequestGen< NetworkModel, IntRNG >::updMaxVertexId()
 {
-    mMaxVertexId = Vertex::last_vertex_id;
+    mMaxVertexId = Vertex::last_vertex_id.value;
 }
 
 #endif  // QKDREQUESTGEN_HPP

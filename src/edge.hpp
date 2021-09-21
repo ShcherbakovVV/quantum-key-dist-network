@@ -9,12 +9,14 @@
 
 class Edge;
 
-using EdgeId = tools::Id< Edge, dclr::IdRep >;
-EdgeId EDGE_INVALID {-1};
+using EdgeId = typename tools::Id< Edge, dclr::IdRep >;
+static EdgeId EDGE_INVALID {-1};
 
 class Edge
 {
     friend std::ostream& operator<< ( std::ostream&, const Edge& );
+    
+    using id_type = EdgeId;
 
     private:
 

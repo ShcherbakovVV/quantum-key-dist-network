@@ -1,8 +1,8 @@
 #include "qkdlink.hpp"
 
-QKD_Link::QKD_Link ( Edge& e, dclr::Metrics m )
+QKD_Link::QKD_Link ( std::shared_ptr< Edge > pe, dclr::Metrics m )
 :
-    mEdge { e },
+    mpEdge { pe },
     mMetrics { m }
 {
     id = last_link_id; 
@@ -11,12 +11,12 @@ QKD_Link::QKD_Link ( Edge& e, dclr::Metrics m )
 
 Edge& QKD_Link::getEdge()
 {
-    return mEdge; 
+    return *mpEdge; 
 }
 
 bool QKD_Link::operator== ( const QKD_Link& l2 )
 {
     return ( id == l2.id ) && 
-           ( mEdge == l2.mEdge ) && 
+           ( mpEdge == l2.mpEdge ) && 
            ( mMetrics == l2.mMetrics ); 
 }

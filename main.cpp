@@ -5,7 +5,6 @@
 
 int main()
 {
-    dclr::SysClock sc {};
-    QKD_Network net {sc};
-    net.initNetwork();
+    QKD_Network net {};
+    //net.initNetwork();
 }
