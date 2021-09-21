@@ -16,7 +16,6 @@ class Path
 
         std::shared_ptr< QKD_Node > start;
         std::shared_ptr< QKD_Node > dest;
-
 };
 
 class DijkstraShortestPaths
