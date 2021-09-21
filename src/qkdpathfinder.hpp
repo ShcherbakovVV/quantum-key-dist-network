@@ -24,7 +24,6 @@ class DijkstraShortestPaths
     private:
 
         
-    
     public:
     
         const Path& operator() ( QKD_Node& st, QKD_Node& ds );
