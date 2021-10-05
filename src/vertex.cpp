@@ -6,6 +6,16 @@ Vertex::Vertex ()
     ++ last_vertex_id; 
 }
 
+VertexId Vertex::getVertexId()
+{
+    return id;
+}
+
+VertexId Vertex::getLastVertexId()
+{
+    return last_vertex_id;
+}
+
 bool Vertex::operator== ( const Vertex& v2 )
 {
     // оператор != автоматически определяется компилятором

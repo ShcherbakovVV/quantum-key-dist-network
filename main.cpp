@@ -6,5 +6,7 @@
 int main()
 {
     QKD_Network net {};
-    //net.initNetwork();
+    NodeId n1 = net.addNode();
+    NodeId n2 = net.addNode();
+    LinkId l = net.addLink( net.getNodeById(n1), net.getNodeById(n2) );
 }

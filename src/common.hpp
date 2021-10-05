@@ -1,73 +1,38 @@
 #ifndef COMMON_HPP
 #define COMMON_HPP
 
+#include <map>
 #include <limits>
 #include <chrono>
+#include <memory>
 #include <concepts>
 
-namespace tools
+#include "timepoint.hpp"
+    
+//template< typename Floating >
+//concept IsMetricsType = std::floating_point< Floating >;
+
+template <typename K, typename V>
+K& key_of_min_value(const std::map<K, V>& m)
 {
-    template< typename Obj, std::signed_integral Rep >
-    struct Id
-    {
-        using obj_type = Obj;
-        using value_type = Rep;
-
-        value_type value; 
-
-        Id () : value { 0 } {};
-        Id ( value_type id ) : value { id } {};
-
-        Id& operator++ ()
-        {
-            ++ value;
-            return *this;
-        }
-
-        Id& operator-- ()
-        {
-            -- value;
-            return *this;
-        }
-
-        // добавить про конвертируемость
-        template< std::signed_integral Rep2 >
-        bool operator== ( const Id< Obj, Rep2 >& id )
-        {
-            return value == id.value;
-        }
-    };
-
-    template< typename Obj, std::integral Rep >
-    std::ostream& operator<< ( std::ostream& os, const Id< Obj, Rep >& id )
-    {
-        return os << id.value;
-    }
-
-    struct PrivateInitializer
-    {
-        template< typename T, typename... Args >
-        static T InvokePrivateConstructor( Args... args )
-        {
-            return T ( args... ); 
-        }
-    };
-}  // namespace tools
+    std::map<V, K> m2 {};
+    for (const auto& [key, value] : m)
+        m2[value] = key;
+    return std::min_element(m2.begin(), m2.end())->second;
+}
 
 namespace dclr 
 {
     using IdRep = int;
 
-    // часы
-    using SysClock = std::chrono::system_clock;
-    using Duration = std::chrono::milliseconds;
+    using SysClock   = std::chrono::system_clock;
+    using Duration   = std::chrono::milliseconds;//TimeDuration::msec;
+    using TimeMoment = TimePoint<SysClock, Duration>;
 
-    // тип метрики
-    template< std::floating_point Double >
-        using MetricsType = Double;
-    using Metrics = MetricsType< double >;
+    //template < IsMetricsType MT >
+        //using Metrics = MT;
+    using Metrics = double;
     static Metrics METRICS_INFINITY = std::numeric_limits< Metrics >::max();
-
 }  // namespace dclr
 
 #endif  // COMMON_HPP

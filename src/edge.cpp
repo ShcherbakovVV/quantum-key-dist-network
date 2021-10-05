@@ -16,24 +16,44 @@ Edge::~Edge ()
     -- second.num_adj_edges;
 }
 
-bool Edge::hasVertex( Vertex& v )
+EdgeId Edge::getEdgeId()
 {
-    return v == first || v == second; 
+    return id;
 }
 
-bool Edge::hasVertices( Vertex& v1, Vertex& v2 )
+EdgeId Edge::getLastEdgeId()
+{
+    return last_edge_id;
+}
+
+symmetric_pair<VertexId> Edge::getAdjVertexIds()
+{
+    return symmetric_pair { first.id, second.id };
+}
+
+VertexId Edge::getOtherVertexId( VertexId v )
+{
+    if ( v == first.getVertexId() )
+        return second.getVertexId();
+    else if ( v == second.getVertexId() )
+        return first.getVertexId();
+    throw std::out_of_range { "No vertex for given id" };
+}
+
+bool Edge::hasVertex( VertexId v )
+{
+    return v == first.getVertexId() || 
+           v == second.getVertexId(); 
+}
+
+bool Edge::hasVertices( VertexId v1, VertexId v2 )
 {
     return hasVertex( v1 ) && hasVertex( v2 );
 }
 
-void Edge::reverse()
-{
-    std::swap( first, second ); 
-}
-
 bool Edge::operator== ( const Edge& e2 )
 {
-    return hasVertices( e2.first, e2.second );
+    return id == e2.id;
 }  
 
 std::ostream& operator<< ( std::ostream& os, const Edge& e )

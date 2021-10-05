@@ -4,31 +4,36 @@
 #include <memory>
 #include <string>
 
+#include "id.hpp"
 #include "common.hpp"
 #include "vertex.hpp" 
 
 class QKD_Node;
 
-using NodeId = typename tools::Id< QKD_Node, dclr::IdRep >;
-static NodeId NODE_INVALID {-1};
+using NodeId = Id< QKD_Node, dclr::IdRep >;
 
 class QKD_Node
 {
+    friend class QKD_Network;
+
     using id_type = NodeId;
     
     private:
         
         NodeId id;
+        static inline NodeId last_node_id = 0;
 
         std::shared_ptr< Vertex > mpVertex; 
 
         QKD_Node () = delete; 
-        QKD_Node ( std::shared_ptr< Vertex >, std::string );
+        QKD_Node ( std::shared_ptr<Vertex>, const std::string& );
 
     public:
-
-        static inline NodeId last_node_id = 0;
+        
         std::string label;
+
+        NodeId getNodeId();
+        static NodeId getLastNodeId();
 
         Vertex& getVertex();
 

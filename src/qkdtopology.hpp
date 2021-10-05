@@ -1,7 +1,6 @@
 #ifndef QKDTOPOLOGY_HPP
 #define QKDTOPOLOGY_HPP
 
-#include <map>
 #include <vector> 
 #include <memory> 
 #include <iostream>
@@ -12,25 +11,27 @@
 #include "vertex.hpp"
 #include "qkdrequestgen.hpp"
 
-template < typename NetworkModel >
+template <typename NetworkModel>
 class QKD_Topology
 {
-    friend class Vertex;
-    friend class Edge;
+    public:
+    
+        friend class Vertex;
+        friend class Edge;
 
-    template < typename Network >
-    friend std::ostream& operator<< (std::ostream& os, 
-                                     const QKD_Topology< Network >& t);
+        template < typename Network >
+        friend std::ostream& operator<< (std::ostream& os, 
+                                         const QKD_Topology< Network >& t);
 
     private:
 
         const NetworkModel& mQKD_Network;
 
-        std::map< VertexId, std::shared_ptr<Vertex> > mmVertexToId;    
-        std::map< EdgeId, std::shared_ptr<Edge> > mmEdgeToId;
+        std::map< VertexId, std::shared_ptr<Vertex>> mmVertexToId;    
+        std::map< EdgeId,   std::shared_ptr<Edge>>   mmEdgeToId;
 
         std::vector< VertexId > maRemovedVertexIdList;
-        std::vector< EdgeId > maRemovedEdgeIdList;
+        std::vector< EdgeId >   maRemovedEdgeIdList;
 
     public:
         
@@ -38,48 +39,53 @@ class QKD_Topology
         QKD_Topology ( NetworkModel& );
 
         VertexId addVertex();
-        EdgeId addEdge( VertexId, VertexId );
+        EdgeId   addEdge( VertexId, VertexId );
 
         void removeVertex( VertexId );
         void removeEdge( EdgeId );
 
-        Vertex& getVertexById( VertexId );
-        Edge& getEdgeById( EdgeId );
+        std::shared_ptr<Vertex> getVertexPtrById( VertexId );
+        std::shared_ptr<Edge>   getEdgePtrById( EdgeId );
 
+        Vertex& getVertexById( VertexId );
+        Edge&   getEdgeById( EdgeId );
+        
+        std::vector<EdgeId> getAdjEdgeIds( VertexId );
+        std::vector<VertexId> getTopologyData();
 };
 
 template < typename NetworkModel >
-QKD_Topology< NetworkModel >::QKD_Topology ( NetworkModel& parent )
+QKD_Topology<NetworkModel>::QKD_Topology ( NetworkModel& parent )
 :
     mQKD_Network { parent }
 {}
 
 template < typename NetworkModel >
-VertexId QKD_Topology< NetworkModel >::addVertex()
+VertexId QKD_Topology<NetworkModel>::addVertex()
 {
     Vertex* pv = new Vertex {};
-    mmVertexToId.emplace( pv->id, pv );
-    mQKD_Network.mRequestGen.updMaxVertexId();
-    return pv->id;
+    VertexId v_id = pv->getVertexId();
+    mmVertexToId.emplace( v_id, pv );
+    return v_id;
 }
 
 template < typename NetworkModel >
-EdgeId QKD_Topology< NetworkModel >::addEdge( VertexId v1, VertexId v2 )
+EdgeId QKD_Topology<NetworkModel>::addEdge( VertexId v1, VertexId v2 )
 {
     Edge* pe = new Edge { getVertexById( v1 ), getVertexById( v2 ) };
-    mmEdgeToId.emplace( pe->id, pe );
-    mQKD_Network.mRequestGen.updMaxVertexId();
-    return pe->id; 
+    EdgeId e_id = pe->getEdgeId();
+    mmEdgeToId.emplace( e_id, pe );
+    return e_id; 
 }
 
 template < typename NetworkModel >
-void QKD_Topology< NetworkModel >::removeVertex( VertexId v )
+void QKD_Topology<NetworkModel>::removeVertex( VertexId v )
 {
-    for ( auto pe = mmEdgeToId.begin(); pe != mmEdgeToId.end(); ++pe )
-        if ( pe->second->hasVertex( getVertexById( v ) ) ) 
+    for ( const auto& [edge_id, edge_ptr] : mmEdgeToId )
+        if ( edge_id.hasVertex( v ) ) 
         {
-            maRemovedEdgeIdList.push_back( pe->first );
-            mmEdgeToId.erase( pe );
+            maRemovedEdgeIdList.push_back( edge_id );
+            mmEdgeToId.erase( edge_id );
             break;
         }
 
@@ -92,36 +98,68 @@ void QKD_Topology< NetworkModel >::removeVertex( VertexId v )
 }
 
 template < typename NetworkModel >
-void QKD_Topology< NetworkModel >::removeEdge( EdgeId e )
+void QKD_Topology<NetworkModel>::removeEdge( EdgeId e )
 {
-    for ( auto p = mmEdgeToId.begin(); p != mmEdgeToId.end(); ++ p )
-        if ( p->first == e ) 
+    for ( const auto& [edge_id, edge_ptr] : mmEdgeToId )
+        if ( edge_id == e ) 
         {
-            -- p->second->first.num_adj_edges; 
-            -- p->second->second.num_adj_edges; 
-            maRemovedEdgeIdList.push_back( p->first );
-            mmEdgeToId.erase( p );
+            -- edge_ptr->first.num_adj_edges; 
+            -- edge_ptr->second.num_adj_edges; 
+            maRemovedEdgeIdList.push_back( edge_id );
+            mmEdgeToId.erase( edge_id );
             break;
         }
 }
 
 template < typename NetworkModel >
-Vertex& QKD_Topology< NetworkModel >::getVertexById( VertexId id )
+std::shared_ptr<Vertex> 
+QKD_Topology<NetworkModel>::getVertexPtrById( VertexId v )
 {
-    if ( id != VERTEX_INVALID )
-        return *mmVertexToId.at( id );
-    throw std::out_of_range( "Invalid vertex id" );
+    try {
+        std::shared_ptr<Vertex> p = mmVertexToId.at( v );
+        return p;
+    } catch (...) {
+        throw std::out_of_range( "No vertex for given id" );
+        //return nullptr;
+    }
 }
 
 template < typename NetworkModel >
-Edge& QKD_Topology< NetworkModel >::getEdgeById( EdgeId id )
+std::shared_ptr<Edge> 
+QKD_Topology<NetworkModel>::getEdgePtrById( EdgeId e )
 {
-    if ( id != EDGE_INVALID )
-        return *mmEdgeToId.at( id );
-    throw std::out_of_range( "Invalid edge id" );
+    try {
+        std::shared_ptr<Edge> p = mmEdgeToId.at( e );
+        return p;
+    } catch (...) {
+        throw std::out_of_range( "No edge for given id" );
+        //return nullptr;
+    }
 }
 
 template < typename NetworkModel >
+Vertex& QKD_Topology<NetworkModel>::getVertexById( VertexId v )
+{
+    return *getVertexPtrById( v );
+}
+
+template < typename NetworkModel >
+Edge& QKD_Topology<NetworkModel>::getEdgeById( EdgeId e )
+{
+    return *getEdgePtrById( e );
+}
+
+template < typename NetworkModel >
+std::vector<EdgeId> QKD_Topology<NetworkModel>::getAdjEdgeIds( VertexId v )
+{
+    std::vector<EdgeId> adj_edges {};
+    for ( const auto& [edge_id, edge_ptr] : mmEdgeToId )
+        if ( edge_ptr->hasVertex( v ) )
+            adj_edges.push_back( edge_id );
+    return adj_edges;
+}
+
+template <typename NetworkModel>
 std::ostream& operator<< ( std::ostream& os, 
                            const QKD_Topology< NetworkModel >& t )
 {
@@ -136,6 +174,15 @@ std::ostream& operator<< ( std::ostream& os,
         os << *value << ", ";
 
     return os;
+}
+
+template <typename NetworkModel>
+std::vector<VertexId> QKD_Topology<NetworkModel>::getTopologyData()
+{
+    std::vector<VertexId> vert_ids {};
+    for ( const auto& [v_id, v_ptr] : mmVertexToId )
+        vert_ids.push_back( v_id );
+    return vert_ids;
 }
 
 #endif  // QKDTOPOLOGY_HPP
