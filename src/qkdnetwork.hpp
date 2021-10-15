@@ -1,10 +1,13 @@
 #ifndef QKDNETWORK_HPP 
 #define QKDNETWORK_HPP 
 
+#include <map>
 #include <string>
+#include <thread>
 #include <stdexcept>
 
 #include <boost/log/trivial.hpp>
+#include <boost/circular_buffer.hpp>
 
 #include "edge.hpp" 
 #include "common.hpp"
@@ -25,50 +28,73 @@ class QKD_Network
         QKD_RequestGen <QKD_Network> mRequestGen;
         QKD_KeyGenModel<QKD_Network> mKeyGenModel;
 
-        std::map<NodeId, std::shared_ptr<QKD_Node> > mmNodeToId;
-        std::map<LinkId, std::shared_ptr<QKD_Link> > mmLinkToId;
+        std::map<NodeId, std::shared_ptr<QKD_Node>> mmNodeToId;
+        std::map<LinkId, std::shared_ptr<QKD_Link>> mmLinkToId;
 
-        std::vector< NodeId > maRemovedNodeIdList;
-        std::vector< LinkId > maRemovedLinkIdList;
+        std::vector<NodeId> maRemovedNodeIdList;
+        std::vector<LinkId> maRemovedLinkIdList;
+        
+        boost::circular_buffer<Request, std::allocator<Request>> maRequestQueue;
+        std::mutex mLock;
+        
+        static std::string makeNodeLabel();
+        
+        /*        
+        void reqGeneration();
+        void keyGeneration();
+        void reqProcessing();
+        */
 
     public:
         
-        QKD_Network ();
+        QKD_Network ( size_t qcap = 10 );
+        
+        ~QKD_Network ();
 
         // модификация сети
-        NodeId addNode( const std::string lbl = std::string 
-            {"Node" + std::to_string( QKD_Node::getLastNodeId().value )} );
-        LinkId addLink( const QKD_Node&, const QKD_Node&, dclr::Metrics m = 0 );
+        NodeId addNode( std::string lbl = makeNodeLabel() );  // строка&?
+        LinkId addLink( NodeId, NodeId, dclr::Metrics m = 0);
 
         void removeNode( NodeId );
         void removeLink( LinkId );
-        
-        bool isNodeRemoved( NodeId );
-        bool isLinkRemoved( LinkId );
-        
+
         // получение информации
-        Edge& getEdgeById( EdgeId );
-        Vertex& getVertexById( VertexId );
+        bool isNodeRemoved( NodeId ) const;
+        bool isLinkRemoved( LinkId ) const;
         
-        std::shared_ptr<QKD_Node> getNodePtrById( NodeId );
-        std::shared_ptr<QKD_Link> getLinkPtrById( LinkId );
+        Edge& getEdgeById( EdgeId ) const;
+        Vertex& getVertexById( VertexId ) const;
         
-        QKD_Node& getNodeById( NodeId );
-        QKD_Link& getLinkById( LinkId );
+        const std::shared_ptr<QKD_Node>& getNodePtrById( NodeId ) const;
+        const std::shared_ptr<QKD_Link>& getLinkPtrById( LinkId ) const;
         
-        QKD_Node& getNodeByVertex( const Vertex& );
-        QKD_Link& getLinkByEdge( const Edge& );
+        QKD_Node& getNodeById( NodeId ) const;
+        QKD_Link& getLinkById( LinkId ) const;
         
-        QKD_Node& getNodeByVertexId( VertexId );
-        QKD_Link& getLinkByEdgeId( EdgeId );
+        QKD_Node& getNodeByVertex( const Vertex& ) const;
+        QKD_Link& getLinkByEdge( const Edge& ) const;
         
-        symmetric_pair<NodeId> getAdjNodeIds( LinkId l );
+        QKD_Node& getNodeByVertexId( VertexId ) const;
+        QKD_Link& getLinkByEdgeId( EdgeId ) const;
         
-        // для алгоритмов
-        std::vector<VertexId> getTopologyData();
-        std::vector<EdgeId> getAdjEdgeIds( VertexId );
-            
+        symmetric_pair<NodeId> getAdjNodeIds( LinkId l ) const;
+        
+        // буфер запросов
+        void pushRequest();
+        Request& popRequest();
+        void processRequest( const Request& );
+        
+        // получение информации для алгоритмов
+        std::vector<VertexId> getTopologyData() const;
+        std::vector<EdgeId>   getAdjEdgeIds( VertexId ) const;
+        
         void simulate();
+        
+        /*
+        std::thread reqGenerationThr();
+        std::thread keyGenerationThr();
+        std::thread reqProcessingThr();
+        */
 };
 
 #endif  // QKDNETWORK_HPP

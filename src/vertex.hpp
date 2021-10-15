@@ -3,13 +3,14 @@
 
 #include <iostream>
 
+#include <boost/log/trivial.hpp>
+
 #include "id.hpp"
 #include "common.hpp"
 
 class Vertex;
 
-using VertexId = Id< Vertex, dclr::IdRep >;
-//static VertexId VERTEX_INVALID {-1};
+using VertexId = Id<Vertex, dclr::IdRep>;
 
 class Vertex
 {
@@ -28,14 +29,17 @@ class Vertex
 
         int num_adj_edges = 0;
         
-        Vertex(); 
+        Vertex ();
 
     public:
     
-        VertexId getVertexId();
+        ~Vertex ();
+    
+        VertexId getVertexId() const;
         static VertexId getLastVertexId();
     
-        bool operator== ( const Vertex& );
+        bool operator== ( const Vertex& ) const;
+        // оператор != автоматически определяется компилятором
 };
 
 std::ostream& operator<< ( std::ostream&, const Vertex& );

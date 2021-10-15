@@ -3,6 +3,8 @@
 
 #include <chrono>
 
+#include <boost/log/trivial.hpp>
+
 /*
 struct TimeDuration
 {
@@ -19,8 +21,8 @@ struct TimeDuration
 };
 */
 
-template< typename Clock >
-concept IsClockType = std::chrono::is_clock_v< Clock >;
+template <typename Clock>
+concept IsClockType = std::chrono::is_clock_v<Clock>;
 
 template <IsClockType Clock, typename Duration>
 struct TimePoint
@@ -48,7 +50,8 @@ struct TimePoint
     }
 
     template <typename Duration2>
-    TimePoint<Clock, Duration2> to( const TimePoint< Clock, Duration >& tp )
+    TimePoint<Clock, Duration2> 
+    to( const TimePoint< Clock, Duration >& tp ) const
     {
         return TimePoint<Clock, Duration2> 
             { std::chrono::time_point_cast<Duration2>(tp.time_point) };
@@ -56,7 +59,7 @@ struct TimePoint
 
     template <typename Duration2>
     TimePoint<Clock, std::common_type_t<dur_type, Duration2>>
-    operator+ ( const Duration2& d )
+    operator+ ( const Duration2& d ) const
     {
         return TimePoint<Clock, std::common_type_t<dur_type, Duration2>> 
                                                             { time_point + d };
@@ -64,14 +67,33 @@ struct TimePoint
     
     template <typename Duration2>
     TimePoint<Clock, std::common_type_t<dur_type, Duration2>>
-    operator- ( const Duration2& d )
+    operator- ( const Duration2& d ) const
     {
         return operator+(-d);
+    }
+    
+    template <typename Duration2>
+    bool operator< ( const TimePoint<Clock, Duration2>& tp2 ) const
+    {
+        return time_point < tp2.time_point;
+    }
+    
+    template <typename Duration2>
+    bool operator> ( const TimePoint<Clock, Duration2>& tp2 ) const
+    {
+        return tp2.time_point < time_point;
+    }
+    
+    template <typename Duration2>
+    bool operator== ( const TimePoint<Clock, Duration2>& tp2 ) const
+    {
+        return time_point == tp2.time_point;
     }
 };
 
 template <typename Clock, typename Duration>
-std::ostream& operator<< ( std::ostream& os, TimePoint<Clock, Duration> tp )
+std::ostream& 
+operator<< ( std::ostream& os, const TimePoint<Clock, Duration>& tp )
 {
     return os << tp.time_point.time_since_epoch().count();
 }

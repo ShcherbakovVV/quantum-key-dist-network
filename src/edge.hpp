@@ -11,8 +11,7 @@
 
 class Edge;
 
-using EdgeId = Id< Edge, dclr::IdRep >;
-//static EdgeId EDGE_INVALID {-1};
+using EdgeId = Id<Edge, dclr::IdRep>;
 
 class Edge
 {
@@ -27,26 +26,26 @@ class Edge
         EdgeId id;
         static inline EdgeId last_edge_id = 0;
         
-        Vertex& first;
-        Vertex& second;
+        Vertex* mpVertex1;
+        Vertex* mpVertex2;
 
         Edge () = delete;
-        Edge ( Vertex&, Vertex& );
+        explicit Edge ( Vertex&, Vertex& );
         
     public:
         
         ~Edge();
         
-        EdgeId getEdgeId();
+        EdgeId getEdgeId() const;
         static EdgeId getLastEdgeId();
         
-        symmetric_pair<VertexId> getAdjVertexIds();
-        VertexId getOtherVertexId( VertexId );
+        symmetric_pair<VertexId> getAdjVertexIds() const;
+        VertexId getOtherVertexId( VertexId ) const;
         
-        bool hasVertex( VertexId );
-        bool hasVertices( VertexId, VertexId );
+        bool hasVertex( VertexId ) const;
+        bool hasVertices( VertexId, VertexId ) const;
 
-        bool operator== ( const Edge& );
+        bool operator== ( const Edge& ) const;
 };
 
 std::ostream& operator<< ( std::ostream&, const Edge& );

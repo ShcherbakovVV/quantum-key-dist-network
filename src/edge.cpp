@@ -1,22 +1,25 @@
 #include "edge.hpp"
 
-Edge::Edge ( Vertex& v1, Vertex& v2 ) :
-    first { v1 },
-    second { v2 } 
+Edge::Edge ( Vertex& v1, Vertex& v2 ) 
+:
+    mpVertex1 { &v1 },
+    mpVertex2 { &v2 } 
 {
-    ++ first.num_adj_edges;
-    ++ second.num_adj_edges;
+    ++ mpVertex1->num_adj_edges;
+    ++ mpVertex2->num_adj_edges;
     id = last_edge_id; 
-    ++ last_edge_id; 
+    ++ last_edge_id;
+    BOOST_LOG_TRIVIAL(trace) << "Added " << *this;
 }
 
 Edge::~Edge ()
 {
-    -- first.num_adj_edges;
-    -- second.num_adj_edges;
+    BOOST_LOG_TRIVIAL(trace) << "Destroyed " << *this;
+    -- mpVertex1->num_adj_edges;
+    -- mpVertex2->num_adj_edges;
 }
 
-EdgeId Edge::getEdgeId()
+EdgeId Edge::getEdgeId() const
 {
     return id;
 }
@@ -26,37 +29,38 @@ EdgeId Edge::getLastEdgeId()
     return last_edge_id;
 }
 
-symmetric_pair<VertexId> Edge::getAdjVertexIds()
+symmetric_pair<VertexId> Edge::getAdjVertexIds() const
 {
-    return symmetric_pair { first.id, second.id };
+    return symmetric_pair { mpVertex1->id, mpVertex2->id };
 }
 
-VertexId Edge::getOtherVertexId( VertexId v )
+VertexId Edge::getOtherVertexId( VertexId v ) const
 {
-    if ( v == first.getVertexId() )
-        return second.getVertexId();
-    else if ( v == second.getVertexId() )
-        return first.getVertexId();
+    if ( v == mpVertex1->getVertexId() )
+        return mpVertex2->getVertexId();
+    else if ( v == mpVertex2->getVertexId() )
+        return mpVertex1->getVertexId();
     throw std::out_of_range { "No vertex for given id" };
 }
 
-bool Edge::hasVertex( VertexId v )
+bool Edge::hasVertex( VertexId v ) const
 {
-    return v == first.getVertexId() || 
-           v == second.getVertexId(); 
+    return v == mpVertex1->getVertexId() || 
+           v == mpVertex2->getVertexId(); 
 }
 
-bool Edge::hasVertices( VertexId v1, VertexId v2 )
+bool Edge::hasVertices( VertexId v1, VertexId v2 ) const
 {
     return hasVertex( v1 ) && hasVertex( v2 );
 }
 
-bool Edge::operator== ( const Edge& e2 )
+bool Edge::operator== ( const Edge& e2 ) const
 {
     return id == e2.id;
 }  
 
 std::ostream& operator<< ( std::ostream& os, const Edge& e )
 {
-    return os << '{' << e.first << ", " << e.second << '}';
+    return os << "Edge " << e.id 
+        << " {" << *e.mpVertex1 << ", " << *e.mpVertex2 << '}';
 }

@@ -12,7 +12,7 @@ struct symmetric_pair
 
     symmetric_pair () = delete;
 
-    symmetric_pair (const T& x, const T& y)
+    explicit symmetric_pair (const T& x, const T& y)
     : 
         first {x},
         second {y} 
@@ -30,27 +30,22 @@ struct symmetric_pair
         second {p.second} 
     {};
 
-    bool contains(T x, T y)
+    bool contains(T x, T y) const
     {
         return (first == x && second == y) || (first == y && second == x);
     }
 
-    bool contains(const std::pair<T, T>& p)
+    bool contains(const std::pair<T, T>& p) const
     {
         return contains(p.first, p.second);
     }
 
-    bool operator== (const symmetric_pair<T>& sp)
+    bool operator== (const symmetric_pair<T>& sp) const
     {
         return contains(sp.first, sp.second);
     }
 
-    bool operator!= (const symmetric_pair<T>& sp)
-    {
-        return !(*this == sp);
-    }
-
-    bool contains(const symmetric_pair<T>& sp)
+    bool contains(const symmetric_pair<T>& sp) const
     {
         return *this == sp;
     }
@@ -63,13 +58,13 @@ struct symmetric_pair
 };
 
 template <typename T>
-symmetric_pair<T>& make_symmetric_pair(const T& x, const T& y)
+symmetric_pair<T> make_symmetric_pair(const T& x, const T& y)
 {
     return symmetric_pair(x, y);
 }
 
 template <typename T>
-symmetric_pair<T>& make_symmetric_pair(const std::pair<T, T>& p)
+symmetric_pair<T> make_symmetric_pair(const std::pair<T, T>& p)
 {
     return symmetric_pair(p);
 }

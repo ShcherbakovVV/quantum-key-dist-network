@@ -4,6 +4,8 @@
 #include <map>
 #include <vector>
 
+#include <boost/log/trivial.hpp>
+
 #include "common.hpp"
 #include "qkdlink.hpp"
 #include "qkdnode.hpp"
@@ -17,61 +19,47 @@ struct Path
 
     NodeId start;
     NodeId dest;
+    
+    ~Path ();
+    
+    const std::vector<LinkId>& getPathLinkIdList() const;
         
     private:
 
         std::vector<LinkId> maPathLinkIdList;
 
         Path () = delete;
-        Path ( NodeId, NodeId );
+        explicit Path ( NodeId, NodeId );
         
         void addLinkToPath( LinkId );
 };
 
-Path::Path ( NodeId st, NodeId ds )
-:
-    start { st }, 
-    dest { ds }
-{}
-
-void Path::addLinkToPath( LinkId l )
-{
-    maPathLinkIdList.push_back( l );
-}
-
-std::ostream& operator<< ( std::ostream& os, const Path& p )
-{
-    os << p.start << "--";
-    for ( const auto& l : p.maPathLinkIdList )
-        os << l << "--";
-    return os << p.dest;
-}
-
-template< typename NetworkModel >
+template <typename NetworkModel>
 struct DijkstraShortestPaths
 {
-    const Path operator() ( QKD_Node&, QKD_Node&, NetworkModel& );
+    Path operator() (const QKD_Node&, const QKD_Node&, const NetworkModel&);
 };
 
-template< typename NetworkModel>
-const Path 
+template <typename NetworkModel>
+Path 
 DijkstraShortestPaths<NetworkModel>::operator() 
-    ( QKD_Node& st, QKD_Node& ds, NetworkModel& net)
+    ( const QKD_Node& st, const QKD_Node& ds, const NetworkModel& net)
 {
-    VertexId start_id = st.getVertex().getVertexId();
-    VertexId dest_id  = st.getVertex().getVertexId();
+    BOOST_LOG_TRIVIAL(trace) << "Invoked DijkstraShortestPaths";
     
-    std::map<VertexId, dclr::Metrics, std::less<dclr::Metrics>> unvisited {};
+    VertexId start_id = st.getVertexId();
+    VertexId dest_id  = st.getVertexId();
+    
+    std::map<VertexId, dclr::Metrics> unvisited {};
     for ( const auto& x : net.getTopologyData() )
-        unvisited.insert( x, dclr::METRICS_INFINITY );
+        unvisited[x] = dclr::METRICS_INFINITY;
     unvisited.at( start_id ) = 0;
     
     Path path { st.getNodeId(), ds.getNodeId() };
     while (true)
     {
         // итерации по смежным ребрам
-        std::vector<EdgeId> adj_edges = net.getAdjEdgeIds( start_id );
-        for ( const auto& e : adj_edges )
+        for ( const auto& e : net.getAdjEdgeIds( start_id ) )
         {
             VertexId neighbor = net.getEdgeById(e).getOtherVertexId(start_id);
             dclr::Metrics distance = net.getLinkByEdgeId(e).getMetricsValue();
@@ -80,44 +68,55 @@ DijkstraShortestPaths<NetworkModel>::operator()
             if ( unvisited.at( neighbor ) > assign_distance )
             {
                 unvisited.at( neighbor ) = assign_distance;
-                path.addLinkToPath( net.getLinkByEdgeId(e) );
+                path.addLinkToPath( net.getLinkByEdgeId(e).getLinkId() );
             }
         }
         unvisited.erase( start_id );
         start_id = key_of_min_value( unvisited );
         if ( !unvisited.contains( dest_id )    // добрались до нужной вершины
-             || unvisited.at(start_id) == dclr::METRICS_INFINITY )  
+             || unvisited.at( start_id ) == dclr::METRICS_INFINITY )  
                                                // граф несвязный
              break;
     }
     return path;
 }
 
-template< typename NetworkModel,
-          typename Algorithm = DijkstraShortestPaths >
+template <typename NetworkModel,
+          typename Algorithm = DijkstraShortestPaths<NetworkModel>>
 class QKD_Pathfinder
 {
     private:
     
-        const NetworkModel& mQKD_Network;
+        NetworkModel& mQKD_Network;
 
     public:
     
         QKD_Pathfinder () = delete;
         QKD_Pathfinder ( NetworkModel& );
         
-        const Path invokeAlgorithm( NodeId, NodeId );
+        ~QKD_Pathfinder ();
+        
+        Path invokeAlgorithm( NodeId, NodeId ) const;
 };
 
-typename< typename NetworkModel, typename Algorithm >
-QKD_Pathfinder ( NetworkModel& parent )
+template <typename NetworkModel, typename Algorithm>
+QKD_Pathfinder<NetworkModel, Algorithm>::QKD_Pathfinder (NetworkModel& parent)
 :
     mQKD_Network { parent }
-{}
+{
+    BOOST_LOG_TRIVIAL(trace) << "Constructed QKD_Pathfinder";
+}
 
-template< typename NetworkModel, typename Algorithm >
-const Path
+template <typename NetworkModel, typename Algorithm>
+QKD_Pathfinder<NetworkModel, Algorithm>::~QKD_Pathfinder ()
+{
+    BOOST_LOG_TRIVIAL(trace) << "Destructed QKD_Pathfinder";
+}
+
+template <typename NetworkModel, typename Algorithm>
+Path
 QKD_Pathfinder<NetworkModel, Algorithm>::invokeAlgorithm(NodeId st, NodeId ds)
+const
 {
     Algorithm alg {};
     return alg( mQKD_Network.getNodeById( st ), 

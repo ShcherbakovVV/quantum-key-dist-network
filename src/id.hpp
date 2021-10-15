@@ -1,7 +1,7 @@
 #ifndef ID_HPP
 #define ID_HPP
 
-template< typename Obj, std::signed_integral Rep >
+template< typename Obj, std::unsigned_integral Rep >
 struct Id
 {
     using obj_type = Obj;
@@ -30,17 +30,17 @@ struct Id
     }
 
     // добавить про конвертируемость
-    template< std::signed_integral Rep2 >
-    bool operator== ( const Id<Obj, Rep2>& id )
+    template< std::unsigned_integral Rep2 >
+    bool operator== ( const Id<Obj, Rep2>& id ) const
     {
         return value == id.value;
     }
 };
 
-template< typename Obj, std::integral Rep >
+template< typename Obj, std::unsigned_integral Rep >
 std::ostream& operator<< ( std::ostream& os, const Id<Obj, Rep>& id )
 {
-    return os << "id " << id.value;
+    return os << id.value;
 }
 
 #endif  // ID_HPP
