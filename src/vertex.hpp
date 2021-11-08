@@ -1,47 +1,65 @@
 #ifndef VERTEX_HPP
 #define VERTEX_HPP
 
+#include <concepts>
 #include <iostream>
 
 #include <boost/log/trivial.hpp>
 
-#include "id.hpp"
-#include "common.hpp"
+#include "lib/id.hpp"
 
-class Vertex;
-
-using VertexId = Id<Vertex, dclr::IdRep>;
-
-class Vertex
+template <std::unsigned_integral IdRep>
+class VertexT
 {
-    friend class Edge;
-    template <typename NetworkModel>
-        friend class QKD_Topology;
-    friend std::ostream& operator<< ( std::ostream&, const Vertex& );
+public:
 
-    using id_type = VertexId;
-    
-    private:
+    template <std::unsigned_integral Rep> friend class EdgeT;
+    template <typename Network>           friend class QKD_Topology;
 
-        VertexId id;
-        static inline VertexId last_vertex_id {0};
+    using this_type = VertexT<IdRep>;
+    using id_type   = Id<this_type, IdRep>;
+
+    using VertexId = id_type;
+
+private:
+
+    VertexId id;
+    static inline VertexId last_id { 0 };
         // inline, т.к. запрещена инициализация static-полей
 
-        int num_adj_edges = 0;
-        
-        Vertex ();
+    int num_adj_edges = 0;
 
-    public:
-    
-        ~Vertex ();
-    
-        VertexId getVertexId() const;
-        static VertexId getLastVertexId();
-    
-        bool operator== ( const Vertex& ) const;
-        // оператор != автоматически определяется компилятором
+    VertexT ();
+
+public:
+
+    ~VertexT ();
+
+    VertexId getVertexId() const      { return id; }
+    static VertexId getLastVertexId() { return last_id; }
+
+    bool operator== ( const this_type& v2 ) const { return id == v2.id; }
+    bool operator<  ( const this_type& v2 ) const { return id < v2.id; }
 };
 
-std::ostream& operator<< ( std::ostream&, const Vertex& );
+template <std::unsigned_integral IdRep>
+VertexT<IdRep>::VertexT ()
+{
+    ++ last_id;
+    id = last_id;
+    BOOST_LOG_TRIVIAL(trace) << "Constructed " << *this;
+}
+
+template <std::unsigned_integral IdRep>
+VertexT<IdRep>::~VertexT ()
+{
+    BOOST_LOG_TRIVIAL(trace) << "Constructed " << *this;
+}
+
+template <std::unsigned_integral IdRep>
+std::ostream& operator<< ( std::ostream& os, const VertexT<IdRep>& v )
+{
+    return os << "Vertex " << v.getVertexId();
+}
 
 #endif  // VERTEX_HPP

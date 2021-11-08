@@ -3,50 +3,81 @@
 
 #include <memory>
 #include <string>
+#include <concepts>
 
 #include <boost/log/trivial.hpp>
 
-#include "id.hpp"
-#include "common.hpp"
-#include "vertex.hpp" 
+#include "lib/id.hpp"
 
-class QKD_Node;
+#include "vertex.hpp"
 
-using NodeId = Id<QKD_Node, dclr::IdRep>;
-
-class QKD_Node
+template <std::unsigned_integral IdRep>
+class QKD_NodeT
 {
+public:
+
+    template <ClockType Clk, DurationType Dur,
+              std::uniform_random_bit_generator Eng, typename Dist,
+              typename Mtr, std::unsigned_integral Int>
     friend class QKD_Network;
-    friend std::ostream& operator<< ( std::ostream&, const QKD_Node& );
 
-    using id_type = NodeId;
-    
-    private:
-        
-        NodeId id;
-        static inline NodeId last_node_id = 0;
+    using this_type = QKD_NodeT<IdRep>;
+    using id_type = Id<this_type, IdRep>;
 
-        std::shared_ptr<Vertex> mpVertex; 
+    using Vertex = VertexT<IdRep>;
 
-        QKD_Node () = delete; 
-        // а если строка - временный объект?
-        QKD_Node ( const std::shared_ptr<Vertex>&, const std::string& );
+    using VertexId = typename Vertex::id_type;
+    using NodeId   = id_type;
 
-    public:
-        
-        ~QKD_Node ();
-        
-        std::string label;
+private:
 
-        NodeId getNodeId() const;
-        static NodeId getLastNodeId();
+    NodeId id;
+    static inline NodeId last_id = 0;
 
-        Vertex& getVertex() const;
-        VertexId getVertexId() const;
+    std::shared_ptr<Vertex> mpVertex;
 
-        bool operator== ( const QKD_Node& ) const;
+    QKD_NodeT () = delete;
+    // а если строка - временный объект?
+    QKD_NodeT ( const std::shared_ptr<Vertex>&, std::string );
+
+public:
+
+    ~QKD_NodeT ();
+
+    std::string label;
+
+    NodeId getNodeId() const      { return id; }
+    static NodeId getLastNodeId() { return last_id; }
+
+    Vertex& getVertex() const     { return *mpVertex; }
+    VertexId getVertexId() const  { return mpVertex->getVertexId(); }
+
+    bool operator== ( const this_type& n2 ) const { return id == n2.id; }
+    bool operator<  ( const this_type& n2 ) const { return id < n2.id; }
 };
 
-std::ostream& operator<< ( std::ostream&, const QKD_Node& );
+template <std::unsigned_integral IdRep>
+QKD_NodeT<IdRep>::QKD_NodeT ( const std::shared_ptr<Vertex>& pv,
+                              std::string lbl )
+:
+    mpVertex { pv },
+    label    { lbl }
+{
+    ++ last_id;
+    id = last_id;
+    BOOST_LOG_TRIVIAL(trace) << "Constructed " << *this;
+}
+
+template <std::unsigned_integral IdRep>
+QKD_NodeT<IdRep>::~QKD_NodeT ()
+{
+    BOOST_LOG_TRIVIAL(trace) << "Destructed " << *this;
+}
+
+template <std::unsigned_integral IdRep>
+std::ostream& operator<< ( std::ostream& os, const QKD_NodeT<IdRep>& n )
+{
+    return os << "Node " << n.getNodeId() << " on " << n.getVertex();
+}
 
 #endif  // QKDNODE_HPP

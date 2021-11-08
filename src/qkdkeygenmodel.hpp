@@ -3,29 +3,39 @@
 
 #include <boost/log/trivial.hpp>
 
-#include "common.hpp"
+#include "qkdlink.hpp"
+#include "qkdnode.hpp"
 
-template < typename NetworkModel >
+template <typename NetworkModel>
 class QKD_KeyGenModel
 {
-    private:
+public:
 
-        NetworkModel& mQKD_Network;
+    template <typename NetPtr, typename ModPtr>
+        friend void assignParent( NetPtr, ModPtr );
 
-    public:
-        
-        QKD_KeyGenModel () = delete;
-        QKD_KeyGenModel ( NetworkModel& );
-        
-        ~QKD_KeyGenModel ();
+    using Metrics = typename NetworkModel::Metrics;
 
-        void updateLinkMetrics( LinkId, dclr::Metrics );
+    using QKD_Link = typename NetworkModel::QKD_Link;
+
+    using NodeId = typename NetworkModel::NodeId;
+    using LinkId = typename NetworkModel::LinkId;
+
+private:
+
+    NetworkModel* mpQKD_Network = nullptr;
+
+public:
+
+    QKD_KeyGenModel ();
+
+    ~QKD_KeyGenModel ();
+
+    void updateLinkMetrics( LinkId, Metrics );
 };
 
 template <typename NetworkModel>
-QKD_KeyGenModel<NetworkModel>::QKD_KeyGenModel ( NetworkModel& parent )
-:
-    mQKD_Network { parent }
+QKD_KeyGenModel<NetworkModel>::QKD_KeyGenModel ()
 {
     BOOST_LOG_TRIVIAL(trace) << "Constructed QKD_KeyGenModel";
 }
@@ -37,10 +47,9 @@ QKD_KeyGenModel<NetworkModel>::~QKD_KeyGenModel ()
 }
 
 template <typename NetworkModel>
-void 
-QKD_KeyGenModel<NetworkModel>::updateLinkMetrics( LinkId l, dclr::Metrics m )
+void QKD_KeyGenModel<NetworkModel>::updateLinkMetrics( LinkId l, Metrics m )
 {
-    QKD_Link& link = mQKD_Network.getLinkById( l );
+    QKD_Link& link = mpQKD_Network->getLinkById( l );
     link.setMetricsValue( link.getMetricsValue() + m );
 }
 
