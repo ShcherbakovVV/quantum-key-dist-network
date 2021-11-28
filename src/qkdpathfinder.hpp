@@ -89,6 +89,7 @@ DijkstraSP<NetworkModel>::operator() ( const QKD_Node& st,
     std::vector<VertexId> path_vertices { current_id };
     std::vector<VertexId> blacklist_vertices {};
 
+    Path path { st.getNodeId(), ds.getNodeId() };
     while ( !unvisited.empty() )
     {
         int candidate_count = 0;
@@ -111,16 +112,17 @@ DijkstraSP<NetworkModel>::operator() ( const QKD_Node& st,
             } catch ( std::out_of_range& exc ) { continue; }
             ++ candidate_count;
         }
+        unvisited.erase( current_id );
         if ( candidate_count == 0  // не смогли продвинуться дальше
                                    // из-за нехватки ключей
              && std::min_element( unvisited.begin(),
                                   unvisited.end() )->second == METRICS_INF )
         {
             BOOST_LOG_TRIVIAL(info) << "Aborting DijkstraSP";
-            throw std::runtime_error
-                { "Can't navigate a Path: no connection or Quantum Keys" };
+            BOOST_LOG_TRIVIAL(info) << "Can't navigate a Path: "
+                << "no connection or Quantum Keys";
+            return path;
         }
-        unvisited.erase( current_id );
         current_id = MinValuePair( unvisited.begin(), unvisited.end() ).first;
         path_vertices.push_back( current_id );
 
@@ -128,7 +130,6 @@ DijkstraSP<NetworkModel>::operator() ( const QKD_Node& st,
     }
 
     // получим линки между вершинами для составления пути
-    Path path { st.getNodeId(), ds.getNodeId() };
     int links_between = 0;  // количество несвязных вершин между двумя связными
                             // в path_vertices
     for ( auto i = path_vertices.rbegin(); i != path_vertices.rend()-1; ++i )

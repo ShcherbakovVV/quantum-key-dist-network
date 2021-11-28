@@ -50,7 +50,9 @@ template <typename NetworkModel>
 void QKD_KeyGenModel<NetworkModel>::updateLinkMetrics( LinkId l, Metrics m )
 {
     QKD_Link& link = mpQKD_Network->getLinkById( l );
-    link.setMetricsValue( link.getMetricsValue() + m );
+    Metrics new_mtr = link.getMetricsValue() + m;
+    if ( new_mtr < 0 ) new_mtr = 0;
+    link.setMetricsValue( new_mtr );
 }
 
 #endif  //  QKDKEYGENMODEL_HPP

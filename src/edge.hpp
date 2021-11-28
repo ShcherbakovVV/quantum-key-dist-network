@@ -16,13 +16,6 @@ public:
 
     template <typename Network> friend class QKD_Topology;
 
-    // template <std::unsigned_integral Rep>
-    // friend std::ostream& operator<< ( std::ostream& os, const EdgeT<Rep>& e )
-    // {
-    //     return os << "Edge " << e.id
-    //         << " {" << *e.mpVertex1 << ", " << *e.mpVertex2 << '}';
-    // }
-
     using this_type = EdgeT<IdRep>;
     using id_type   = Id<this_type, IdRep>;
 

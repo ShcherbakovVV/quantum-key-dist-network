@@ -6,10 +6,22 @@
 #include <thread>
 #include <chrono>
 #include <utility>
+#include <cstring>
+#include <fstream>
+#include <optional>
 #include <stdexcept>
+
+#if defined(__linux__)
+    #include <unistd.h>
+#elif defined(_WIN64)
+    #include <windows.h>
+#endif
 
 #include <boost/log/trivial.hpp>
 #include <boost/circular_buffer.hpp>
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 
 #include "lib/timemoment.hpp"
 #include "lib/limited_queue.hpp"
@@ -25,6 +37,10 @@
 #include "qkdpathfinder.hpp"
 #include "qkdrequestgen.hpp"
 #include "qkdkeygenmodel.hpp"
+
+extern const char* gv_file;
+extern const char* img_file;
+extern SDL_Window* window;
 
 using std::chrono_literals::operator""ms;
 
@@ -70,7 +86,9 @@ public:
 
 private:
 
-    std::mutex mMutex;
+    #ifdef THREAD_BASED
+        std::mutex mMutex;
+    #endif
 
     std::shared_ptr<QKD_Topology<this_type>>    mpTopology;
     std::shared_ptr<QKD_Pathfinder<this_type>>  mpPathfinder;
@@ -112,6 +130,10 @@ public:
     // получение информации
     bool isNodeRemoved( NodeId ) const;
     bool isLinkRemoved( LinkId ) const;
+
+    bool isNodeInPath( const Path&, NodeId ) const;
+    bool isLinkInPath( const Path& path, LinkId l ) const
+        { return path.isLinkInPath( l ); };
 
     Edge& getEdgeById( EdgeId e ) const
         { return mpTopology->getEdgeById( e ); }
@@ -159,12 +181,18 @@ public:
     Request& popRequest();
     template <typename Alg> void processRequest( Request& );
 
-    std::thread keyGenThread()
-        { return std::thread ( [this]{ keyGeneration(); } ); }
-    std::thread reqGenThread()
-        { return std::thread ( [this]{ reqGeneration(); } ); }
-    template <typename Alg> std::thread reqProcThread()
-        { return std::thread ([this]{ reqProcessing<Alg>();} ); }
+    #ifdef THREAD_BASED
+        std::thread keyGenThread()
+            { return std::thread ( [this]{ keyGeneration(); } ); }
+        std::thread reqGenThread()
+            { return std::thread ( [this]{ reqGeneration(); } ); }
+        template <typename Alg> std::thread reqProcThread()
+            { return std::thread ([this]{ reqProcessing<Alg>();} ); }
+    #endif  // THREAD_BASED
+
+    // GraphViz
+    std::string toGraphViz( std::optional<Path> ) const;
+    void displayNetwork( std::string ) const;
 };
 
 template <ClockType Clk, DurationType Dur,
@@ -289,6 +317,25 @@ bool QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::isLinkRemoved( LinkId l ) const
 template <ClockType Clk, DurationType Dur,
           std::uniform_random_bit_generator Eng, typename Dist,
           typename Mtr, std::unsigned_integral Int>
+bool QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::isNodeInPath
+( const Path& path, NodeId n ) const
+{
+    if ( path.start == n || path.dest == n )
+        return true;
+    auto links = path.getPathLinkIdList();
+    for ( const auto& l : links )
+    {
+        Edge& e = getLinkById(l).getEdge();
+        VertexId vi = getNodeById(n).getVertexId();
+        if ( e.hasVertex( vi ) )
+            return true;
+    }
+    return false;
+}
+
+template <ClockType Clk, DurationType Dur,
+          std::uniform_random_bit_generator Eng, typename Dist,
+          typename Mtr, std::unsigned_integral Int>
 const std::shared_ptr
     <typename QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::QKD_Node>&
 QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::getNodePtrById( NodeId n ) const
@@ -361,9 +408,14 @@ template <ClockType Clk, DurationType Dur,
           typename Mtr, std::unsigned_integral Int>
 void QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::genQuantumKeys()
 {
-    std::lock_guard lock { mMutex };
+    #ifdef THREAD_BASED
+        std::lock_guard lock { mMutex };
+    #endif  // THREAD_BASED
+
     for ( const auto& [l_id, l_ptr] : mmLinkToId )
-        mpKeyGenModel->updateLinkMetrics( l_id, 1 );
+        if ( static_cast<double>(std::rand())/RAND_MAX > 0.5 )
+            mpKeyGenModel->updateLinkMetrics( l_id, 1 );
+    displayNetwork( toGraphViz( std::nullopt ) );
     BOOST_LOG_TRIVIAL(info) << "QKD_Network: Generated Quantum Keys";
 }
 
@@ -372,7 +424,10 @@ template <ClockType Clk, DurationType Dur,
           typename Mtr, std::unsigned_integral Int>
 void QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::pushRequest()
 {
-    std::lock_guard lock { mMutex };
+    #ifdef THREAD_BASED
+        std::lock_guard lock { mMutex };
+    #endif  // THREAD_BASED
+
     if ( maRequestQueue.try_push( mpRequestGen->genRequest() ) == 0 )
         BOOST_LOG_TRIVIAL(info) << "QKD_Network: Request Queue is full";
     else
@@ -385,7 +440,10 @@ template <ClockType Clk, DurationType Dur,
 typename QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::Request&
 QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::popRequest()
 {
-    std::lock_guard lock { mMutex };
+    #ifdef THREAD_BASED
+        std::lock_guard lock { mMutex };
+    #endif  // THREAD_BASED
+
     if ( !maRequestQueue.empty() )
     {
         Request& r = maRequestQueue.pop_front();  // & - ?
@@ -401,63 +459,165 @@ template <ClockType Clk, DurationType Dur,
 template <typename Alg>
 void QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::processRequest( Request& req )
 {
-    std::lock_guard lock { mMutex };
+    #ifdef THREAD_BASED
+        std::lock_guard lock { mMutex };
+    #endif  // THREAD_BASED
+
+    if ( req.exp_time < TimePoint {} )
+        return;  // если заявка устарела
+
     try {
         Path path =
             mpPathfinder->template invokeAlgorithm<Alg>( req.start, req.dest );
         for ( const auto& l : path.getPathLinkIdList() )
             mpKeyGenModel->updateLinkMetrics( l, -1 );
-        BOOST_LOG_TRIVIAL(info) << "QKD_Network: Utilized " << path;
+        if ( !path.getPathLinkIdList().empty() )
+            BOOST_LOG_TRIVIAL(info) << "QKD_Network: Utilized " << path;
+        displayNetwork( toGraphViz( path ) );
     } catch ( std::exception& e ) {
         BOOST_LOG_TRIVIAL(error) << e.what();
     }
 }
 
-template <ClockType Clk, DurationType Dur,
-          std::uniform_random_bit_generator Eng, typename Dist,
-          typename Mtr, std::unsigned_integral Int>
-void QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::keyGeneration()
-{
-    while (true)
-    {
-        std::this_thread::sleep_for( std::chrono::nanoseconds
-            { 10*std::rand()} );
-        genQuantumKeys();
-    }
-}
+#ifdef THREAD_BASED
 
-template <ClockType Clk, DurationType Dur,
-          std::uniform_random_bit_generator Eng, typename Dist,
-          typename Mtr, std::unsigned_integral Int>
-void QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::reqGeneration()
-{
-    while (true)
+    template <ClockType Clk, DurationType Dur,
+              std::uniform_random_bit_generator Eng, typename Dist,
+              typename Mtr, std::unsigned_integral Int>
+    void QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::keyGeneration()
     {
-        std::this_thread::sleep_for( std::chrono::nanoseconds
-            { 100*std::rand()} );
-        pushRequest();
-    }
-}
-
-template <ClockType Clk, DurationType Dur,
-          std::uniform_random_bit_generator Eng, typename Dist,
-          typename Mtr, std::unsigned_integral Int>
-template <typename Alg>
-void QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::reqProcessing()
-{
-    while (true)
-    try {
-        Request& r = popRequest();
-        if ( r.exp_time > TimePoint {} )
+        while (true)
         {
-            std::this_thread::sleep_for
-                ( std::chrono::nanoseconds { 10*std::rand() } );
-            processRequest<Alg>( r );
+            std::this_thread::sleep_for( std::chrono::nanoseconds
+                { std::rand()} );
+            genQuantumKeys();
         }
-    } catch ( std::runtime_error& re ) {
-        BOOST_LOG_TRIVIAL(info) << re.what();
-        std::this_thread::sleep_for
-            ( std::chrono::nanoseconds { 1000*std::rand() } );
+    }
+
+    template <ClockType Clk, DurationType Dur,
+              std::uniform_random_bit_generator Eng, typename Dist,
+              typename Mtr, std::unsigned_integral Int>
+    void QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::reqGeneration()
+    {
+        while (true)
+        {
+            std::this_thread::sleep_for( std::chrono::nanoseconds
+                { std::rand()} );
+            pushRequest();
+        }
+    }
+
+    template <ClockType Clk, DurationType Dur,
+              std::uniform_random_bit_generator Eng, typename Dist,
+              typename Mtr, std::unsigned_integral Int>
+    template <typename Alg>
+    void QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::reqProcessing()
+    {
+        while (true)
+        try {
+            Request& r = popRequest();
+            std::this_thread::sleep_for
+                ( std::chrono::nanoseconds { std::rand() } );
+            processRequest<Alg>( r );
+        } catch ( std::runtime_error& re ) {
+            BOOST_LOG_TRIVIAL(info) << re.what();
+            // std::this_thread::sleep_for
+            //     ( std::chrono::nanoseconds { std::rand() } );
+        }
+    }
+
+#endif  // THREAD_BASED
+
+template <ClockType Clk, DurationType Dur,
+          std::uniform_random_bit_generator Eng, typename Dist,
+          typename Mtr, std::unsigned_integral Int>
+std::string
+QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::toGraphViz
+( std::optional<Path> path_opt )
+const
+{
+    std::string gv = "graph G {\n";
+    for ( const auto& npr : mmNodeToId )  // вывод объявлений узлов
+    {
+        gv += npr.second->label;
+        if ( path_opt && isNodeInPath( path_opt.value(), npr.first ) )
+        {
+            gv += "[penwidth=5";
+            if ( npr.second->getNodeId() == path_opt.value().start
+                 || npr.second->getNodeId() == path_opt.value().dest )
+                gv += ",style=filled,fillcolor=gray50]";
+            else gv += "];\n";
+        }
+        else gv += ";\n";
+    }
+    for ( const auto& lpr : mmLinkToId )  // вывод линков
+    {
+        QKD_Link l = *lpr.second;
+        symmetric_pair<VertexId> vpr = l.getEdge().getAdjVertexIds();
+        QKD_Node& n1 = getNodeByVertexId( vpr.first );
+        QKD_Node& n2 = getNodeByVertexId( vpr.second );
+        std::string mtr_lbl
+            = std::to_string( static_cast<int>( l.getMetricsValue() ) );
+        gv += n1.label + "--" + n2.label + "[label=" + mtr_lbl;
+        if ( path_opt && path_opt.value().isLinkInPath( lpr.first ) )
+            gv += ",penwidth=5";
+        gv += "];\n";
+    }
+    gv += '}';
+    return gv;
+}
+
+void removeInCWD( std::string file )
+{
+    char cwd[PATH_MAX];
+    getcwd( cwd, PATH_MAX );
+    strcat( cwd, "/" );
+    remove( strcat( cwd, file.c_str() ) );
+}
+
+template <ClockType Clk, DurationType Dur,
+          std::uniform_random_bit_generator Eng, typename Dist,
+          typename Mtr, std::unsigned_integral Int>
+void
+QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::displayNetwork( std::string net )
+const
+{
+    std::fstream fstrm { gv_file, std::ios_base::out };
+    fstrm << net;
+    fstrm.close();
+
+    std::string img_file_str { "-o" };
+    const char* img_file2 = (img_file_str += img_file).c_str();
+
+    pid_t pid = vfork();
+    if ( pid == 0 )
+    {
+        #if defined(__linux__)
+            execl( "/bin/dot", "dot", gv_file,
+                   R"(-Gsize=8,6/!)", "-Gdpi=100", "-Gratio=fill",
+                   "-Tpng", img_file2, (char*) nullptr );
+        #elif defined(_WIN64)
+
+        #endif
+    }
+    else if ( pid > 0 )
+    {
+        SDL_Surface* wndbg = SDL_GetWindowSurface( window );
+        SDL_Surface* image = IMG_Load( img_file );
+        if ( image == nullptr )
+        {
+            std::cerr << "SDL_image error: " << IMG_GetError() << '\n';
+            return;
+        }
+        int blit = SDL_BlitSurface( image, nullptr, wndbg, nullptr );
+        if ( blit < 0 )
+        {
+            std::cerr << "SDL error: " << SDL_GetError() << '\n';
+            return;
+        }
+        SDL_UpdateWindowSurface( window );
+        SDL_FreeSurface( wndbg );
+        SDL_FreeSurface( image );
     }
 }
 
