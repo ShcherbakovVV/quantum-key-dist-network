@@ -29,7 +29,7 @@ using Distribution = std::uniform_int_distribution<IdRepr>;
 using Network =
     QKD_Network<SysClock, Duration, RNG_Engine, Distribution, Metrics, IdRepr>;
 
-SDL_Window* WndInit()
+SDL_Window* WindowInit()
 {
     int sdlinit = SDL_Init( SDL_INIT_TIMER|SDL_INIT_VIDEO );
     if ( sdlinit < 0 )
@@ -48,7 +48,7 @@ SDL_Window* WndInit()
     SDL_Window* wnd = SDL_CreateWindow( "qkd_demo",
                                         SDL_WINDOWPOS_CENTERED,
                                         SDL_WINDOWPOS_CENTERED,
-                                        790, 590, 0 );
+                                        800, 600, 0 );
     if ( wnd == nullptr )
     {
         std::cerr << "SDL error: %s" << SDL_GetError() << '\n';
@@ -66,12 +66,12 @@ void SleepEstimately( double min_msecs, double max_msecs )
     std::this_thread::sleep_for( std::chrono::milliseconds { msecs } );
 }
 
-int main()
+int main(  )
 {
     boost::log::core::get()->set_filter
         ( boost::log::trivial::severity >= boost::log::trivial::info );
 
-    window = WndInit();
+    window = WindowInit();
     removeInCWD( gv_file );
     removeInCWD( img_file );
 
@@ -89,10 +89,14 @@ int main()
     auto n3 = net.addNode();
     auto n4 = net.addNode();
     auto n5 = net.addNode();
+    auto n6 = net.addNode();
 
     [[maybe_unused]] auto l1 = net.addLink( n1, n2, 0 );
     [[maybe_unused]] auto l2 = net.addLink( n2, n3, 0 );
     [[maybe_unused]] auto l3 = net.addLink( n2, n4, 0 );
+    [[maybe_unused]] auto l4 = net.addLink( n3, n5, 0 );
+    [[maybe_unused]] auto l5 = net.addLink( n4, n1, 0 );
+    [[maybe_unused]] auto l6 = net.addLink( n6, n1, 0 );
 
     #ifdef THREAD_BASED
         std::thread kgen  = net.keyGenThread();
@@ -118,16 +122,28 @@ int main()
             }
         }
         #ifndef THREAD_BASED
-            SleepEstimately(300, 700);
             if ( static_cast<double>(std::rand())/RAND_MAX > 0.8 )
+            {
                 net.genQuantumKeys();
+                SleepEstimately( 300, 700 );
+            }
 
-            SleepEstimately(300, 700);
-            if ( static_cast<double>(std::rand())/RAND_MAX > 0.3 )
+            if ( static_cast<double>(std::rand())/RAND_MAX > 0.5 )
             {
                 net.pushRequest();
-                auto& req = net.popRequest();
-                net.processRequest<DijkstraSP<Network>>( req );
+                SleepEstimately( 300, 700 );
+            }
+
+            if ( static_cast<double>(std::rand())/RAND_MAX > 0.3 )
+            {
+                try {
+                    auto& req = net.popRequest();
+                    net.processRequest<DijkstraSP<Network>>( req );
+                    SleepEstimately( 300, 700 );
+                } catch ( std::runtime_error& exc ) {  // no request in queue
+                    SleepEstimately( 300, 700 );
+                    continue;
+                }
             }
         #endif  // THREAD_BASED
     }

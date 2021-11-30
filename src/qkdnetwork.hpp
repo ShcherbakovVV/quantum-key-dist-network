@@ -545,8 +545,8 @@ const
             gv += "[penwidth=5";
             if ( npr.second->getNodeId() == path_opt.value().start
                  || npr.second->getNodeId() == path_opt.value().dest )
-                gv += ",style=filled,fillcolor=gray50]";
-            else gv += "];\n";
+                gv += ",style=filled,fillcolor=gray50";
+            gv += "];\n";
         }
         else gv += ";\n";
     }
