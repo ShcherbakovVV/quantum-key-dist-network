@@ -12,6 +12,16 @@
 #include "qkdlink.hpp"
 #include "qkdnode.hpp"
 
+template <typename K, typename V>
+std::ostream& operator<< ( std::ostream& os, const std::map<K,V> map )
+{
+    for ( const auto& elem : map )
+    {
+        os << elem.first << " " << elem.second << '\n';
+    }
+    return os;
+}
+
 template <typename T1, typename T2, typename Comp = std::less<T2>>
 struct ComparePairByValues
 {
@@ -115,12 +125,12 @@ DijkstraSP<NetworkModel>::operator() ( const QKD_Node& st,
         unvisited.erase( current_id );
         if ( candidate_count == 0  // не смогли продвинуться дальше
                                    // из-за нехватки ключей
-             && std::min_element( unvisited.begin(),
-                                  unvisited.end() )->second == METRICS_INF )
+            && MinValuePair( unvisited.begin(),
+                             unvisited.end() ).second == METRICS_INF ) 
         {
-            BOOST_LOG_TRIVIAL(info) << "Aborting DijkstraSP";
-            BOOST_LOG_TRIVIAL(info) << "Can't navigate a Path: "
-                << "no connection or Quantum Keys";
+            BOOST_LOG_TRIVIAL(info) << "Aborting DijkstraSP";                                                              
+            BOOST_LOG_TRIVIAL(info) 
+                << "Can't navigate a Path: no connection or Quantum Keys";
             return path;
         }
         current_id = MinValuePair( unvisited.begin(), unvisited.end() ).first;

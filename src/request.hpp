@@ -32,4 +32,11 @@ RequestT<NetworkModel>::RequestT ( TimePoint gen, TimePoint exp,
     dest     { d }
 {}
 
+template <typename NetworkModel>
+std::ostream& operator<< ( std::ostream& os, const RequestT<NetworkModel> req ) 
+{
+    return os << "Request {" << req.start << ", " << req.dest << "} at " 
+              << req.gen_time << ", expires at " << req.exp_time;
+}
+
 #endif  // REQUEST_HPP

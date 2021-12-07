@@ -103,10 +103,9 @@ QKD_RequestGen<NetworkModel>::genRequest()
 
     TimePoint now {};
     TimePoint expir = now + mRequestLifetime;
-    BOOST_LOG_TRIVIAL(info) << "QKD_RequestGen: generated Request {"
-        << start << ", " << dest << "} at "
-        << now << ", expires at " << expir;
-    return Request { now, expir, start, dest };
+    Request req { now, expir, start, dest };
+    BOOST_LOG_TRIVIAL(info) << "QKD_RequestGen: generated " << req;
+    return req; 
 }
 
 template <typename NetworkModel>

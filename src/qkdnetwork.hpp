@@ -186,7 +186,7 @@ public:
     void     genQuantumKeys();
     void     pushRequest();
     Request& popRequest();
-    template <typename Alg> void processRequest( Request& );
+    template <typename Alg> bool processRequest( Request& );
 
     #ifdef THREAD_BASED
         std::thread keyGenThread()
@@ -470,24 +470,27 @@ QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::popRequest()
     if ( !maRequestQueue.empty() )
     {
         Request& r = maRequestQueue.pop_front();  // & - ?
-        BOOST_LOG_TRIVIAL(info) << "QKD_Network: Got Request from queue";
+        BOOST_LOG_TRIVIAL(info) << "QKD_Network: Got Request from Queue";
         return r;
     }
-    throw std::runtime_error {"Request queue is empty"};
+    throw std::runtime_error {"Request Queue is empty"};
 }
 
 template <ClockType Clk, DurationType Dur,
           std::uniform_random_bit_generator Eng, typename Dist,
           typename Mtr, std::unsigned_integral Int>
 template <typename Alg>
-void QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::processRequest( Request& req )
+bool QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::processRequest( Request& req )
 {
     #ifdef THREAD_BASED
         std::lock_guard lock { mMutex };
     #endif  // THREAD_BASED
 
-    if ( req.exp_time < TimePoint {} )
-        return;  // если заявка устарела
+    if ( req.exp_time < TimePoint {} )  // если заявка устарела
+    {
+        BOOST_LOG_TRIVIAL(info) << "QKD_Network: Discarding outdated " << req;
+        return false;  
+    }
 
     try {
         Path path =
@@ -500,6 +503,7 @@ void QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::processRequest( Request& req )
     } catch ( std::exception& e ) {
         BOOST_LOG_TRIVIAL(error) << e.what();
     }
+    return true;
 }
 
 #ifdef THREAD_BASED
@@ -541,7 +545,7 @@ void QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::processRequest( Request& req )
             Request& r = popRequest();
             std::this_thread::sleep_for
                 ( std::chrono::nanoseconds { std::rand() } );
-            processRequest<Alg>( r );
+            processRequest<Alg>( r );  //  TODO: now bool instead of void
         } catch ( std::runtime_error& re ) {
             BOOST_LOG_TRIVIAL(info) << re.what();
             std::this_thread::sleep_for

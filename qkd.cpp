@@ -5,6 +5,7 @@
 #include <chrono>
 #include <random>
 #include <cstdlib>
+#include <optional>
 
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
@@ -81,54 +82,54 @@ int main()
     // module init
     auto* p_top = new QKD_Topology<Network>    {};
     auto* p_pth = new QKD_Pathfinder<Network>  {};
-    auto* p_rqg = new QKD_RequestGen<Network>  { 10000ms };
+    auto* p_rqg = new QKD_RequestGen<Network>  { 20000ms };
     auto* p_kgm = new QKD_KeyGenModel<Network> {};
 
     // network init
     Network net { p_top, p_pth, p_rqg, p_kgm, 10 };
 
-    auto ats_smol    = net.addNode( NodeClass::Target, "АТС Смольного" );
-    auto okt_zd      = net.addNode( NodeClass::Target, "Октябрьская ЖД" );
-    auto ivc_rzd_spb = net.addNode( NodeClass::Aux,    "ИВЦ СпБ РЖД" );
-    auto tosno       = net.addNode( NodeClass::Aux,    "Тосно" );
-    auto chudovo     = net.addNode( NodeClass::Aux,    "Чудово" );
-    auto mvishera    = net.addNode( NodeClass::Aux,    "Малая Вишера" );
-    auto torbino     = net.addNode( NodeClass::Aux,    "Торбино" );
-    auto uglovka     = net.addNode( NodeClass::Aux,    "Угловка" );
-    auto bologoe     = net.addNode( NodeClass::Aux,    "Бологое" );
-    auto udomlya     = net.addNode( NodeClass::Target, "Удомля" );
-    auto kalininsky  = net.addNode( NodeClass::Target, "ЦОД <<Калининский>>" );
-    auto vvolochek   = net.addNode( NodeClass::Aux,    "Вышний Волочек" );
-    auto spirovo     = net.addNode( NodeClass::Aux,    "Спирово" );
-    auto likhoslavl  = net.addNode( NodeClass::Aux,    "Лихославль" );
-    auto tver        = net.addNode( NodeClass::Aux,    "Тверь" );
-    auto klin        = net.addNode( NodeClass::Aux,    "Клин" );
-    auto zelenograd  = net.addNode( NodeClass::Aux,    "Зеленоград" );
-    auto gvc_rzd     = net.addNode( NodeClass::Aux,    "ГВЦ РЖД" );
-    auto m10         = net.addNode( NodeClass::Target, "ЦОД <<М10>>" );
-    auto c_rzd       = net.addNode( NodeClass::Target, "Ц РЖД" );
-    auto mivc_rzd    = net.addNode( NodeClass::Target, "МИВЦ РЖД" );
+    auto ats_smol    = net.addNode( NodeClass::Target, "АТС Смольного" );        // 1
+    auto okt_zd      = net.addNode( NodeClass::Target, "Октябрьская ЖД" );       // 2
+    auto ivc_rzd_spb = net.addNode( NodeClass::Aux,    "ИВЦ СпБ РЖД" );          // 3
+    auto tosno       = net.addNode( NodeClass::Aux,    "Тосно" );                // 4
+    auto chudovo     = net.addNode( NodeClass::Aux,    "Чудово" );               // 5
+    auto mvishera    = net.addNode( NodeClass::Aux,    "Малая Вишера" );         // 6
+    auto torbino     = net.addNode( NodeClass::Aux,    "Торбино" );              // 7
+    auto uglovka     = net.addNode( NodeClass::Aux,    "Угловка" );              // 8
+    auto bologoe     = net.addNode( NodeClass::Aux,    "Бологое" );              // 9
+    auto udomlya     = net.addNode( NodeClass::Target, "Удомля" );               // 10
+    auto kalininsky  = net.addNode( NodeClass::Target, "ЦОД <<Калининский>>" );  // 11
+    auto vvolochek   = net.addNode( NodeClass::Aux,    "Вышний Волочек" );       // 12
+    auto spirovo     = net.addNode( NodeClass::Aux,    "Спирово" );              // 13
+    auto likhoslavl  = net.addNode( NodeClass::Aux,    "Лихославль" );           // 14
+    auto tver        = net.addNode( NodeClass::Aux,    "Тверь" );                // 15
+    auto klin        = net.addNode( NodeClass::Aux,    "Клин" );                 // 16
+    auto zelenograd  = net.addNode( NodeClass::Aux,    "Зеленоград" );           // 17
+    auto gvc_rzd     = net.addNode( NodeClass::Aux,    "ГВЦ РЖД" );              // 18
+    auto m10         = net.addNode( NodeClass::Target, "ЦОД <<М10>>" );          // 19
+    auto c_rzd       = net.addNode( NodeClass::Target, "Ц РЖД" );                // 20
+    auto mivc_rzd    = net.addNode( NodeClass::Target, "МИВЦ РЖД" );             // 21
 
-    net.addLink( ats_smol, ivc_rzd_spb, 0 );
-    net.addLink( okt_zd, ivc_rzd_spb, 0 );
-    net.addLink( ivc_rzd_spb, tosno, 0 );
-    net.addLink( tosno, chudovo, 0 );
-    net.addLink( chudovo, mvishera, 0 );
-    net.addLink( mvishera, torbino, 0 );
-    net.addLink( torbino, uglovka, 0 );
-    net.addLink( uglovka, bologoe, 0 );
-    net.addLink( kalininsky, udomlya, 0 );
-    net.addLink( udomlya, bologoe, 0 );
-    net.addLink( bologoe, vvolochek, 0 );
-    net.addLink( vvolochek, spirovo, 0 );
-    net.addLink( spirovo, likhoslavl, 0 );
-    net.addLink( likhoslavl, tver, 0 );
-    net.addLink( tver, klin, 0 );
-    net.addLink( klin, zelenograd, 0 );
-    net.addLink( zelenograd, gvc_rzd, 0 );
-    net.addLink( gvc_rzd, m10, 0 );
-    net.addLink( gvc_rzd, c_rzd, 0 );
-    net.addLink( gvc_rzd, mivc_rzd, 0 );
+    net.addLink( ats_smol, ivc_rzd_spb, 2 );
+    net.addLink( okt_zd, ivc_rzd_spb, 2 );
+    net.addLink( ivc_rzd_spb, tosno, 2 );
+    net.addLink( tosno, chudovo, 2 );
+    net.addLink( chudovo, mvishera, 2 );
+    net.addLink( mvishera, torbino, 2 );
+    net.addLink( torbino, uglovka, 2 );
+    net.addLink( uglovka, bologoe, 2 );
+    net.addLink( kalininsky, udomlya, 2 );
+    net.addLink( udomlya, bologoe, 2 );
+    net.addLink( bologoe, vvolochek, 2 );
+    net.addLink( vvolochek, spirovo, 2 );
+    net.addLink( spirovo, likhoslavl, 2 );
+    net.addLink( likhoslavl, tver, 2 );
+    net.addLink( tver, klin, 2 );
+    net.addLink( klin, zelenograd, 2 );
+    net.addLink( zelenograd, gvc_rzd, 2 );
+    net.addLink( gvc_rzd, m10, 2 );
+    net.addLink( gvc_rzd, c_rzd, 2 );
+    net.addLink( gvc_rzd, mivc_rzd, 2 );
 
     setNodePos( net.getNodeById( ats_smol ), 0, 9 );
     setNodePos( net.getNodeById( okt_zd ), 1, 10 );
@@ -178,17 +179,21 @@ int main()
         #ifndef THREAD_BASED
             if ( static_cast<double>(std::rand())/RAND_MAX > 0.86 )
                 net.genQuantumKeys();
+	    net.displayNetwork( net.toGraphViz( std::nullopt ) );
             SleepEstimately( 300, 700 );
 
-            if ( static_cast<double>(std::rand())/RAND_MAX > 0.3 )
+            if ( static_cast<double>(std::rand())/RAND_MAX > 0.2 )
                 net.pushRequest();
             SleepEstimately( 300, 700 );
 
             if ( static_cast<double>(std::rand())/RAND_MAX > 0.3 )
             {
-                try {
-                    auto req = net.popRequest();
-                    net.processRequest<DijkstraSP<Network>>( req );
+                try {  // checking until request is relevant
+                    bool is_expired = true;
+		    do {
+                    	auto req = net.popRequest();
+			is_expired = ! net.processRequest<DijkstraSP<Network>>( req );
+		    } while ( is_expired );
                 } catch ( std::runtime_error& exc ) {  // no request in queue
                     continue;
                 }
@@ -201,10 +206,11 @@ int main()
 
 #else  // #if defined(__linux__) || defined(_WIN64)
 
-// int main() {
-//     std::cerr << "Unsupported platform";
-//     return EXIT_FAILURE;
-// }
-    #pragma message("Unsupported platform, aborting build")
+int main()
+{
+    #pragma message("Unsupported platform")
+    std::cerr << "Unsupported platform";
+    return EXIT_FAILURE;
+}
 
 #endif  // #if defined(__linux__) || defined(_WIN64)
