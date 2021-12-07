@@ -89,7 +89,8 @@ QKD_NodeT<IdRep>::~QKD_NodeT ()
 template <std::unsigned_integral IdRep>
 std::ostream& operator<< ( std::ostream& os, const QKD_NodeT<IdRep>& n )
 {
-    return os << "Node " << n.getNodeId() << " on " << n.getVertex();
+    //return os << "Node " << n.getNodeId() << " on " << n.getVertex();
+    return os << n.label << " on " << n.getVertex();
 }
 
 template <std::unsigned_integral IdRepr>

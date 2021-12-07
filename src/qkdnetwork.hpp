@@ -586,7 +586,7 @@ const
         QKD_Node& n1 = getNodeByVertexId( vpr.first );
         QKD_Node& n2 = getNodeByVertexId( vpr.second );
         std::string mtr_lbl = std::to_string( static_cast<int>( l.getMetricsValue() ) );
-        gv += "\"" + n1.label + "\"--\"" + n2.label + "\"[label=\"" + mtr_lbl + "   \"";
+        gv += "\"" + n1.label + "\"--\"" + n2.label + "\"[label=\"" + mtr_lbl + "  \"";
         if ( path_opt && path_opt.value().isLinkInPath( lpr.first ) )
             gv += ",penwidth=5";
         gv += ",labeljust=l,fontname = Arial,fontsize=16];\n";
