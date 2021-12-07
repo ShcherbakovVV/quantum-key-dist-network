@@ -83,7 +83,8 @@ QKD_RequestGen<NetworkModel>::genRandomNodeId()
     NodeId res;
     do {
         res = mIntRNG();
-        if ( !mpQKD_Network->isNodeRemoved( res ) )
+        if ( !mpQKD_Network->isNodeRemoved( res )
+             && !mpQKD_Network->isAuxNode( res ) )
             break;
     }
     while (true);

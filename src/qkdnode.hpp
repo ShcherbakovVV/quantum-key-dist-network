@@ -11,6 +11,12 @@
 
 #include "vertex.hpp"
 
+enum class NodeClass
+{
+    Aux,
+    Target
+};
+
 template <std::unsigned_integral IdRep>
 class QKD_NodeT
 {
@@ -20,6 +26,9 @@ public:
               std::uniform_random_bit_generator Eng, typename Dist,
               typename Mtr, std::unsigned_integral Int>
     friend class QKD_Network;
+
+    template <std::unsigned_integral IdRepr>
+        friend void setNodePos( QKD_NodeT<IdRepr>&, int, int );
 
     using this_type = QKD_NodeT<IdRep>;
     using id_type = Id<this_type, IdRep>;
@@ -35,6 +44,9 @@ private:
     static inline NodeId last_id = 0;
 
     std::shared_ptr<Vertex> mpVertex;
+
+    int xpos = 0;
+    int ypos = 0;
 
     QKD_NodeT () = delete;
     // а если строка - временный объект?
@@ -78,6 +90,13 @@ template <std::unsigned_integral IdRep>
 std::ostream& operator<< ( std::ostream& os, const QKD_NodeT<IdRep>& n )
 {
     return os << "Node " << n.getNodeId() << " on " << n.getVertex();
+}
+
+template <std::unsigned_integral IdRepr>
+void setNodePos( QKD_NodeT<IdRepr>& n, int x, int y )
+{
+    n.xpos = x;
+    n.ypos = y;
 }
 
 #endif  // QKDNODE_HPP

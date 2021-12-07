@@ -13,6 +13,8 @@
 
 #if defined(__linux__)
     #include <unistd.h>
+    #include <sys/wait.h>
+    //#include <sys/types.h>
 #elif defined(_WIN64)
     #include <windows.h>
 #endif
@@ -40,6 +42,7 @@
 
 extern const char* gv_file;
 extern const char* img_file;
+extern const char* bg_file;
 extern SDL_Window* window;
 
 using std::chrono_literals::operator""ms;
@@ -101,6 +104,8 @@ private:
     std::vector<NodeId> maRemovedNodeIdList;
     std::vector<LinkId> maRemovedLinkIdList;
 
+    std::vector<NodeId> maAuxNodeIdList;
+
     limited_queue<Request> maRequestQueue;
 
     static std::string makeNodeLabel();
@@ -121,7 +126,7 @@ public:
         { BOOST_LOG_TRIVIAL(trace) << "Destructed QKD_Network"; }
 
     // модификация сети
-    NodeId addNode( std::string lbl = makeNodeLabel() );  // строка&?
+    NodeId addNode( NodeClass, std::string lbl = makeNodeLabel() );  // строка&?
     LinkId addLink( NodeId, NodeId, Metrics m );
 
     void removeNode( NodeId );
@@ -130,6 +135,8 @@ public:
     // получение информации
     bool isNodeRemoved( NodeId ) const;
     bool isLinkRemoved( LinkId ) const;
+
+    bool isAuxNode( NodeId ) const;
 
     bool isNodeInPath( const Path&, NodeId ) const;
     bool isLinkInPath( const Path& path, LinkId l ) const
@@ -224,19 +231,21 @@ template <ClockType Clk, DurationType Dur,
 std::string QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::makeNodeLabel()
 {
     std::string label = "Node";
-    return label + std::to_string( QKD_Node::getLastNodeId().value()+1 );
+    return label + std::to_string( QKD_Node::getLastNodeId().value() + 1 );
 }
 
 template <ClockType Clk, DurationType Dur,
           std::uniform_random_bit_generator Eng, typename Dist,
           typename Mtr, std::unsigned_integral Int>
 typename QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::NodeId
-QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::addNode( std::string lbl )
+QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::addNode( NodeClass ncls, std::string lbl )
 {
     VertexId v = mpTopology->addVertex();
     QKD_Node* pn = new QKD_Node { mpTopology->getVertexPtrById( v ), lbl };
     NodeId n_id = pn->getNodeId();
     mmNodeToId.insert( std::make_pair( n_id, pn ) );
+    if ( ncls == NodeClass::Aux )
+        maAuxNodeIdList.push_back( n_id );
     mpRequestGen->updGenParams();
     BOOST_LOG_TRIVIAL(info) << "QKD_Network: Added " << *pn;
     return n_id;
@@ -270,6 +279,8 @@ void QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::removeNode( NodeId n )
             // должно стоять в конце блока
             BOOST_LOG_TRIVIAL(info) << "QKD_Network: Removed " << *node_ptr;
             maRemovedNodeIdList.push_back( node_id );
+            if ( isAuxNode( node_id ) )
+                maAuxNodeIdList.erase( node_id );
             mmNodeToId.erase( node_id );
             break;
         }
@@ -295,8 +306,8 @@ template <ClockType Clk, DurationType Dur,
           typename Mtr, std::unsigned_integral Int>
 bool QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::isNodeRemoved( NodeId n ) const
 {
-    const auto b = maRemovedNodeIdList.begin();
-    const auto e = maRemovedNodeIdList.end();
+    const auto& b = maRemovedNodeIdList.begin();
+    const auto& e = maRemovedNodeIdList.end();
     if ( std::find( b, e, n ) != e )
         return true;
     return false;
@@ -307,9 +318,21 @@ template <ClockType Clk, DurationType Dur,
           typename Mtr, std::unsigned_integral Int>
 bool QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::isLinkRemoved( LinkId l ) const
 {
-    const auto b = maRemovedLinkIdList.begin();
-    const auto e = maRemovedLinkIdList.end();
+    const auto& b = maRemovedLinkIdList.begin();
+    const auto& e = maRemovedLinkIdList.end();
     if ( std::find( b, e, l ) != e )
+        return true;
+    return false;
+}
+
+template <ClockType Clk, DurationType Dur,
+          std::uniform_random_bit_generator Eng, typename Dist,
+          typename Mtr, std::unsigned_integral Int>
+bool QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::isAuxNode( NodeId n ) const
+{
+    const auto& b = maAuxNodeIdList.begin();
+    const auto& e = maAuxNodeIdList.end();
+    if ( std::find( b, e, n ) != e )
         return true;
     return false;
 }
@@ -322,7 +345,7 @@ bool QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::isNodeInPath
 {
     if ( path.start == n || path.dest == n )
         return true;
-    auto links = path.getPathLinkIdList();
+    auto& links = path.getPathLinkIdList();
     for ( const auto& l : links )
     {
         Edge& e = getLinkById(l).getEdge();
@@ -344,7 +367,7 @@ QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::getNodePtrById( NodeId n ) const
         return mmNodeToId.at( n );
     } catch (...) {
         throw std::out_of_range
-            { "No QKD_Node for given NodeId: " + to_string(n) };
+            { "No QKD_Node for given NodeId: " + std::to_string( n.value() ) };
     }
 }
 
@@ -359,7 +382,7 @@ QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::getLinkPtrById( LinkId l ) const
         return mmLinkToId.at( l );
     } catch (...) {
         throw std::out_of_range
-            { "No QKD_Link for given LinkId: " + to_string(l) };
+            { "No QKD_Link for given LinkId: " + std::to_string( l.value() ) };
     }
 }
 
@@ -521,8 +544,8 @@ void QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::processRequest( Request& req )
             processRequest<Alg>( r );
         } catch ( std::runtime_error& re ) {
             BOOST_LOG_TRIVIAL(info) << re.what();
-            // std::this_thread::sleep_for
-            //     ( std::chrono::nanoseconds { std::rand() } );
+            std::this_thread::sleep_for
+                ( std::chrono::nanoseconds { std::rand() } );
         }
     }
 
@@ -536,19 +559,25 @@ QKD_Network<Clk, Dur, Eng, Dist, Mtr, Int>::toGraphViz
 ( std::optional<Path> path_opt )
 const
 {
-    std::string gv = "graph G {\n";
+    std::string gv = "graph G {\nbgcolor=\"transparent\"\n";
     for ( const auto& npr : mmNodeToId )  // вывод объявлений узлов
     {
-        gv += npr.second->label;
+        gv += "\"" + npr.second->label + "\"[pos=\""
+            + std::to_string( npr.second->xpos ) + ","
+            + std::to_string( npr.second->ypos ) + "!\""
+            + "fontname = Arial";
+        if ( !isAuxNode( npr.first ) )
+            gv += ",shape=box3d";
+        else
+            gv += ",shape=rect";
         if ( path_opt && isNodeInPath( path_opt.value(), npr.first ) )
         {
-            gv += "[penwidth=5";
+            gv += ",penwidth=5";
             if ( npr.second->getNodeId() == path_opt.value().start
                  || npr.second->getNodeId() == path_opt.value().dest )
                 gv += ",style=filled,fillcolor=gray50";
-            gv += "];\n";
         }
-        else gv += ";\n";
+        gv += "];\n";
     }
     for ( const auto& lpr : mmLinkToId )  // вывод линков
     {
@@ -556,23 +585,14 @@ const
         symmetric_pair<VertexId> vpr = l.getEdge().getAdjVertexIds();
         QKD_Node& n1 = getNodeByVertexId( vpr.first );
         QKD_Node& n2 = getNodeByVertexId( vpr.second );
-        std::string mtr_lbl
-            = std::to_string( static_cast<int>( l.getMetricsValue() ) );
-        gv += n1.label + "--" + n2.label + "[label=" + mtr_lbl;
+        std::string mtr_lbl = std::to_string( static_cast<int>( l.getMetricsValue() ) );
+        gv += "\"" + n1.label + "\"--\"" + n2.label + "\"[label=\"" + mtr_lbl + "   \"";
         if ( path_opt && path_opt.value().isLinkInPath( lpr.first ) )
             gv += ",penwidth=5";
-        gv += "];\n";
+        gv += ",labeljust=l,fontname = Arial,fontsize=16];\n";
     }
     gv += '}';
     return gv;
-}
-
-void removeInCWD( std::string file )
-{
-    char cwd[PATH_MAX];
-    getcwd( cwd, PATH_MAX );
-    strcat( cwd, "/" );
-    remove( strcat( cwd, file.c_str() ) );
 }
 
 template <ClockType Clk, DurationType Dur,
@@ -589,36 +609,46 @@ const
     std::string img_file_str { "-o" };
     const char* img_file2 = (img_file_str += img_file).c_str();
 
-    pid_t pid = vfork();
-    if ( pid == 0 )
-    {
-        #if defined(__linux__)
-            execl( "/bin/dot", "dot", gv_file,
-                   R"(-Gsize=8,6/!)", "-Gdpi=100", "-Gratio=fill",
-                   "-Tpng", img_file2, (char*) nullptr );
-        #elif defined(_WIN64)
-
-        #endif
-    }
-    else if ( pid > 0 )
-    {
-        SDL_Surface* wndbg = SDL_GetWindowSurface( window );
-        SDL_Surface* image = IMG_Load( img_file );
-        if ( image == nullptr )
+    #if defined(__linux__)
+        pid_t pid1 = vfork();
+        if ( pid1 == 0 )  // дочерний процесс
         {
-            std::cerr << "SDL_image error: " << IMG_GetError() << '\n';
-            return;
+            pid_t pid2 = vfork();
+            if ( pid2 == 0 )
+                execl( "/bin/neato", "neato", gv_file,
+                       R"(-Gsize=10,7/!)", "-Gdpi=100", "-Gratio=fill",
+                       "-Tpng", img_file2, (char*) nullptr );
+            else if ( pid2 > 0 )
+            {
+                wait( nullptr );  // ждем завершения дочернего процесса
+                execl( "/bin/convert", "convert", bg_file, img_file,
+                       "-background", "white", "-compose", "over", "-layers",
+                       "flatten", img_file, (char*) nullptr );
+            }
         }
-        int blit = SDL_BlitSurface( image, nullptr, wndbg, nullptr );
-        if ( blit < 0 )
+        else if ( pid1 > 0 )  // родитель
         {
-            std::cerr << "SDL error: " << SDL_GetError() << '\n';
-            return;
+            wait( nullptr );
+            SDL_Surface* wndbg = SDL_GetWindowSurface( window );
+            SDL_Surface* image = IMG_Load( img_file );
+            if ( image == nullptr )
+            {
+                std::cerr << "SDL_image error: " << IMG_GetError() << '\n';
+                return;
+            }
+            int blit = SDL_BlitSurface( image, nullptr, wndbg, nullptr );
+            if ( blit < 0 )
+            {
+                std::cerr << "SDL error: " << SDL_GetError() << '\n';
+                return;
+            }
+            SDL_UpdateWindowSurface( window );
+            SDL_FreeSurface( wndbg );
+            SDL_FreeSurface( image );
         }
-        SDL_UpdateWindowSurface( window );
-        SDL_FreeSurface( wndbg );
-        SDL_FreeSurface( image );
-    }
+    #elif defined(_WIN64)
+        // windows specific syscalls
+    #endif
 }
 
 #endif  // QKDNETWORK_HPP

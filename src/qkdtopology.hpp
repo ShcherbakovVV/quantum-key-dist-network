@@ -140,7 +140,7 @@ QKD_Topology<NetworkModel>::getVertexPtrById( VertexId v ) const
         return mmVertexToId.at( v );
     } catch (...) {
         throw std::out_of_range
-            { "No Vertex for given VertexId: " + to_string( v ) };
+            { "No Vertex for given VertexId: " + std::to_string( v.value() ) };
     }
 }
 
@@ -152,7 +152,7 @@ QKD_Topology<NetworkModel>::getEdgePtrById( EdgeId e ) const
         return mmEdgeToId.at( e );
     } catch (...) {
         throw std::out_of_range
-            { "No Edge for given EdgeId: " + to_string( e ) };
+            { "No Edge for given EdgeId: " + std::to_string( e.value() ) };
     }
 }
 

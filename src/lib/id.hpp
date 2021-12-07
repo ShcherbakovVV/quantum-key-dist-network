@@ -47,12 +47,6 @@ public:
 };
 
 template <typename Obj, std::unsigned_integral Rep>
-std::string to_string( const Id<Obj, Rep>& id )
-{
-    return std::to_string( id.value() );
-}
-
-template <typename Obj, std::unsigned_integral Rep>
 std::ostream& operator<< ( std::ostream& os, const Id<Obj, Rep>& id )
 {
     return os << id.value();
