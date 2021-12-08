@@ -2,10 +2,12 @@
 
 #if defined(__linux__) || defined(_WIN64)
 
+#include <ctime>
 #include <chrono>
 #include <random>
 #include <cstdlib>
 #include <optional>
+#include <type_traits>
 
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
@@ -110,26 +112,26 @@ int main()
     auto c_rzd       = net.addNode( NodeClass::Target, "Ц РЖД" );                // 20
     auto mivc_rzd    = net.addNode( NodeClass::Target, "МИВЦ РЖД" );             // 21
 
-    net.addLink( ats_smol, ivc_rzd_spb, 2 );
-    net.addLink( okt_zd, ivc_rzd_spb, 2 );
-    net.addLink( ivc_rzd_spb, tosno, 2 );
-    net.addLink( tosno, chudovo, 2 );
-    net.addLink( chudovo, mvishera, 2 );
-    net.addLink( mvishera, torbino, 2 );
-    net.addLink( torbino, uglovka, 2 );
-    net.addLink( uglovka, bologoe, 2 );
-    net.addLink( kalininsky, udomlya, 2 );
-    net.addLink( udomlya, bologoe, 2 );
-    net.addLink( bologoe, vvolochek, 2 );
-    net.addLink( vvolochek, spirovo, 2 );
-    net.addLink( spirovo, likhoslavl, 2 );
-    net.addLink( likhoslavl, tver, 2 );
-    net.addLink( tver, klin, 2 );
-    net.addLink( klin, zelenograd, 2 );
-    net.addLink( zelenograd, gvc_rzd, 2 );
-    net.addLink( gvc_rzd, m10, 2 );
-    net.addLink( gvc_rzd, c_rzd, 2 );
-    net.addLink( gvc_rzd, mivc_rzd, 2 );
+    net.addLink( ats_smol, ivc_rzd_spb, 0 );
+    net.addLink( okt_zd, ivc_rzd_spb, 0 );
+    net.addLink( ivc_rzd_spb, tosno, 0 );
+    net.addLink( tosno, chudovo, 0 );
+    net.addLink( chudovo, mvishera, 0 );
+    net.addLink( mvishera, torbino, 0 );
+    net.addLink( torbino, uglovka, 0 );
+    net.addLink( uglovka, bologoe, 0 );
+    net.addLink( kalininsky, udomlya, 0 );
+    net.addLink( udomlya, bologoe, 0 );
+    net.addLink( bologoe, vvolochek, 0 );
+    net.addLink( vvolochek, spirovo, 0 );
+    net.addLink( spirovo, likhoslavl, 0 );
+    net.addLink( likhoslavl, tver, 0 );
+    net.addLink( tver, klin, 0 );
+    net.addLink( klin, zelenograd, 0 );
+    net.addLink( zelenograd, gvc_rzd, 0 );
+    net.addLink( gvc_rzd, m10, 0 );
+    net.addLink( gvc_rzd, c_rzd, 0 );
+    net.addLink( gvc_rzd, mivc_rzd, 0 );
 
     setNodePos( net.getNodeById( ats_smol ), 0, 9 );
     setNodePos( net.getNodeById( okt_zd ), 1, 10 );
@@ -177,6 +179,9 @@ int main()
             }
         }
         #ifndef THREAD_BASED
+	    if constexpr ( std::is_integral_v<std::time_t> )
+	    	std::srand( std::time(0) );  // seeding RNG
+
             if ( static_cast<double>(std::rand())/RAND_MAX > 0.86 )
                 net.genQuantumKeys();
 	    net.displayNetwork( net.toGraphViz( std::nullopt ) );
