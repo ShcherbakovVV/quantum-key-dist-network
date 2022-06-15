@@ -1,5 +1,4 @@
 #include "PriorityQueue.hpp"
-#include <stdexcept>
 
 
 bool PriorityQueue::push_request(std::shared_ptr<Request>& req) 
@@ -13,7 +12,7 @@ bool PriorityQueue::push_request(std::shared_ptr<Request>& req)
 }
 
 
-std::optional<std::shared_ptr<Request>> PriorityQueue::pop_request()
+std::shared_ptr<Request> PriorityQueue::pop_request()
 {
     if (_queue.empty())
         return {};
@@ -25,7 +24,7 @@ std::optional<std::shared_ptr<Request>> PriorityQueue::pop_request()
     if (!req)
         throw std::logic_error {"PriorityQueue::pop_request(): bad request cast"};
 
-    return {req};
+    return req;
 }
 
 
@@ -39,18 +38,19 @@ bool LimitedPriorityQueue::push_request(std::shared_ptr<Request>& req)
 }  
 
 
-std::optional<std::shared_ptr<Request>> TimedPriorityQueue::pop_request()
+std::shared_ptr<Request> TimedPriorityQueue::pop_request()
 {
-    auto req_opt = PriorityQueue::pop_request();
-    if (!req_opt)
+    auto pr_req = PriorityQueue::pop_request();
+    if (!pr_req)
         return {};
 
-    auto req = std::dynamic_pointer_cast<PriorityRequest>(req_opt.value());
+    auto req = std::dynamic_pointer_cast<Request>(pr_req);
     if (!req)
         throw std::logic_error {"TimedPriorityQueue::pop_request(): bad request cast"};
 
+    // timed request check
     if (_try_pop_request(req))
-        return {req};
+        return req;
 
     return {};
 }

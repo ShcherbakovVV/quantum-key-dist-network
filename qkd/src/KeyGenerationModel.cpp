@@ -26,20 +26,13 @@ double KeyGenerationModel::_get_scale(Distance x)
 
 
 // PUBLIC FUNCTIONS
-KeyData KeyGenerationModel::key_data(Descriptor link) const
-{
-    return {PROP_TABLE.property_as<KeyAmount>(link, "key amount"),
-            PROP_TABLE.property_as<KeyRate>(link, "key rate, bps")};
-}
-
-
 void KeyGenerationModel::generate_keys()
 {
     auto time_passed = network().curr() - network().prev();
     double time_factor = 1000;
 
     double links = 0;
-    KeyData avg {0, 0};
+    KeyAmount avg_amount = 0;
     for (size_t i = 0; i != PROP_TABLE.size().size_desc; ++i)
     {
         auto link = static_cast<Descriptor>(i);
@@ -47,9 +40,9 @@ void KeyGenerationModel::generate_keys()
         {
             ++links;
 
-            auto kdata = key_data(link);
-            avg.amount += kdata.amount;
-            avg.rate += kdata.rate;
+            auto amount = PROP_TABLE.property_as<KeyAmount>(link, "key amount");
+            auto rate = PROP_TABLE.property_as<KeyRate>(link, "key rate, bps");
+            avg_amount += amount;
 
             auto distance = PROP_TABLE.property_as<double>(link, "distance");
 
@@ -58,20 +51,20 @@ void KeyGenerationModel::generate_keys()
             auto scale = _get_scale(distance);
             _key_gen->reset_params(alpha, beta);
 
-            kdata.amount += kdata.rate / QUANTUM_KEY_LENGTH_BITS;
-            kdata.rate = scale*(*_key_gen)() * time_passed / time_factor;
+            amount += (rate / QUANTUM_KEY_LENGTH_BITS);
+            //BOOST_LOG_TRIVIAL(info) << rate;
+            rate = scale * (*_key_gen)() * time_passed / time_factor;
             
-            PROP_TABLE(link, "key amount") = to_string_with_precision(kdata.amount, 6);
-            PROP_TABLE(link, "key rate, bps") = to_string_with_precision(kdata.rate, 6);
+            PROP_TABLE(link, "key amount") = to_string_with_precision(amount, 6);
+            PROP_TABLE(link, "key rate, bps") = to_string_with_precision(rate, 6);
         }
     }
     if (links != 0 && time_passed != 0)
     {
-        avg.amount = avg.amount / links;
-        avg.rate = avg.rate * time_factor / (time_passed * links);
+        avg_amount = avg_amount / links;
 
         BOOST_LOG_TRIVIAL(info) << "KeyGenerationModel: generated keys, avg. amount: " 
-                                << avg.amount << ", avg. rate " << avg.rate << " bps";
+                                << avg_amount;
     }
 }
 
@@ -87,7 +80,7 @@ bool KeyGenerationModel::utilize_keys(const Path& path)
     for (size_t i = 0; i != path_data.size(); ++i)
     {
         auto link = static_cast<Descriptor>(i);
-        if (PROP_TABLE.is_link(link) && key_data(link).amount < 1)
+        if (PROP_TABLE.is_link(link) && PROP_TABLE.property_as<KeyAmount>(link, "key amount") < 1)
         {
             BOOST_LOG_TRIVIAL(warning) << "KeyGenerationModel: insufficient keys";
             return false;
@@ -96,7 +89,7 @@ bool KeyGenerationModel::utilize_keys(const Path& path)
     for (size_t i = 0; i != path_data.size(); ++i)
     {
         auto link = static_cast<Descriptor>(i);
-        auto key_amount = key_data(link).amount - 1;
+        auto key_amount = PROP_TABLE.property_as<KeyAmount>(link, "key amount") - 1;
         PROP_TABLE(link, "key amount") = std::to_string(key_amount);
     }
     BOOST_LOG_TRIVIAL(info) << "KeyGenerationModel: utilized keys";

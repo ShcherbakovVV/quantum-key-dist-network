@@ -21,13 +21,6 @@ using KeyRate   = double;
 using Metrics = double;
 
 
-struct KeyData
-{
-    KeyAmount amount;
-    KeyRate rate;
-};
-
-
 class Clock
 {
     friend class Network;

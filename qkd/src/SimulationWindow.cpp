@@ -254,7 +254,7 @@ void SimulationWindow::on_run_simulation()
     textview.get_buffer()->insert_at_cursor(sim_time_entry.get_buffer()->get_text() + " ");
     textview.get_buffer()->insert_at_cursor(sim_time_fac + "\n");
 
-    textview.get_buffer()->insert_at_cursor("    simulation step, s: ");
+    textview.get_buffer()->insert_at_cursor("    simulation step: ");
     textview.get_buffer()->insert_at_cursor(sim_step_entry.get_buffer()->get_text() + " ");
     textview.get_buffer()->insert_at_cursor(sim_step_fac + "\n");
 
@@ -308,6 +308,7 @@ void SimulationWindow::network_setup()
 
     DescriptorCounter::reset();
     PROP_TABLE.clear();
+    STATISTICS.reset();
 
     key_generation = std::make_shared<RNG<br::beta_distribution<Metrics>>>();
     key_gen_model = std::make_shared<KeyGenerationModel>(key_generation);
@@ -343,14 +344,14 @@ void SimulationWindow::network_setup()
         auto req_queue = std::make_shared<LimitedTimedPriorityQueue>(sim_params.queue_cap);
         queue_manager = std::make_shared<QueueManager>(req_queue);
     }
-    // else if (sim_params.queue_type == "Random")
-    // {
-    //     auto req_builder = std::make_shared<TimedRequestBuilder>(sim_params.req_lifetime);
-    //     req_generator = std::make_shared<RequestGenerator>(req_builder);
+    else if (sim_params.queue_type == "Random")
+    {
+        auto req_builder = std::make_shared<TimedRequestBuilder>(sim_params.req_lifetime);
+        req_generator = std::make_shared<RequestGenerator>(req_builder);
 
-    //     auto req_queue = std::make_shared<LimitedTimedRandomQueue>(sim_params.queue_cap);
-    //     queue_manager = std::make_shared<QueueManager>(req_queue);
-    // }
+        auto req_queue = std::make_shared<LimitedTimedRandomQueue>(sim_params.queue_cap);
+        queue_manager = std::make_shared<QueueManager>(req_queue);
+    }
 
     qkd_network->connect_module(ModuleType::KEY_GEN_MODEL, key_gen_model);
     qkd_network->connect_module(ModuleType::PATHFINDER, pathfinder);
@@ -383,29 +384,29 @@ void SimulationWindow::network_setup()
     auto c_rzd       = topology->add_node({{"type", "target"}, {"label", "Ц РЖД"},                     {"x pos", "18"}, {"y pos", "-4.5"}});   // 20
     auto mivc_rzd    = topology->add_node({{"type", "target"}, {"label", "МИВЦ РЖД"},                  {"x pos", "18"}, {"y pos", "-6"}});   // 21
 
-    topology->add_link(nevs_smol,   ats_smol,    {{"distance", "50"}});
-    topology->add_link(ats_smol,    ov_ttk,      {{"distance", "50"}});
-    topology->add_link(ov_ttk,      ivc_rzd_spb, {{"distance", "50"}});
-    topology->add_link(okt_zd,      ivc_rzd_spb, {{"distance", "50"}});
-    topology->add_link(ivc_rzd_spb, tosno,       {{"distance", "50"}});
-    topology->add_link(tosno,       chudovo,     {{"distance", "50"}});
-    topology->add_link(chudovo,     mvishera,    {{"distance", "50"}});
-    topology->add_link(mvishera,    torbino,     {{"distance", "50"}});
-    topology->add_link(torbino,     uglovka,     {{"distance", "50"}});
-    topology->add_link(uglovka,     bologoe,     {{"distance", "50"}});
-    topology->add_link(kalininsky,  udomlya,     {{"distance", "50"}});
-    topology->add_link(udomlya,     bologoe,     {{"distance", "50"}});
-    topology->add_link(bologoe,     vvolochek,   {{"distance", "50"}});
-    topology->add_link(vvolochek,   spirovo,     {{"distance", "50"}});
-    topology->add_link(spirovo,     likhoslavl,  {{"distance", "50"}});
-    topology->add_link(likhoslavl,  tver,        {{"distance", "50"}});
-    topology->add_link(tver,        zavidovo,    {{"distance", "50"}});
-    topology->add_link(zavidovo,    klin,        {{"distance", "50"}});
-    topology->add_link(klin,        kryukovo,    {{"distance", "50"}});
-    topology->add_link(kryukovo,    gvc_rzd,     {{"distance", "50"}});
-    topology->add_link(gvc_rzd,     m9,          {{"distance", "50"}});
-    topology->add_link(gvc_rzd,     c_rzd,       {{"distance", "50"}});
-    topology->add_link(gvc_rzd,     mivc_rzd,    {{"distance", "50"}});
+    topology->add_link(nevs_smol,   ats_smol,    {{"distance", "1.4"}});
+    topology->add_link(ats_smol,    ov_ttk,      {{"distance", "8.6"}});
+    topology->add_link(ov_ttk,      ivc_rzd_spb, {{"distance", "3.3"}});
+    topology->add_link(okt_zd,      ivc_rzd_spb, {{"distance", "3"}});
+    topology->add_link(ivc_rzd_spb, tosno,       {{"distance", "55"}});
+    topology->add_link(tosno,       chudovo,     {{"distance", "86.7"}});
+    topology->add_link(chudovo,     mvishera,    {{"distance", "72.3"}});
+    topology->add_link(mvishera,    torbino,     {{"distance", "59"}});
+    topology->add_link(torbino,     uglovka,     {{"distance", "71.6"}});
+    topology->add_link(uglovka,     bologoe,     {{"distance", "59.1"}});
+    topology->add_link(kalininsky,  udomlya,     {{"distance", "4"}});
+    topology->add_link(udomlya,     bologoe,     {{"distance", "78.4"}});
+    topology->add_link(bologoe,     vvolochek,   {{"distance", "54.9"}});
+    topology->add_link(vvolochek,   spirovo,     {{"distance", "38.7"}});
+    topology->add_link(spirovo,     likhoslavl,  {{"distance", "53"}});
+    topology->add_link(likhoslavl,  tver,        {{"distance", "53.2"}});
+    topology->add_link(tver,        zavidovo,    {{"distance", "55.5"}});
+    topology->add_link(zavidovo,    klin,        {{"distance", "24.9"}});
+    topology->add_link(klin,        kryukovo,    {{"distance", "52.2"}});
+    topology->add_link(kryukovo,    gvc_rzd,     {{"distance", "45.6"}});
+    topology->add_link(gvc_rzd,     m9,          {{"distance", "17.1"}});
+    topology->add_link(gvc_rzd,     c_rzd,       {{"distance", "0.5"}});
+    topology->add_link(gvc_rzd,     mivc_rzd,    {{"distance", "1.3"}});
 
     arrivals.reset_params(sim_params.arr_lambda);
     service.reset_params(sim_params.srv_lambda);

@@ -16,6 +16,12 @@ void Statistics::ignore_attribute(const std::string& attr)
 }
 
 
+void Statistics::reset()
+{
+    _attributes.clear();
+}
+
+
 std::string& Statistics::operator[](const std::string& attr) 
 {
     if (!_attributes.contains(attr))

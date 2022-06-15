@@ -24,6 +24,18 @@ Descriptor RequestGenerator::_random_node() const
 
 
 // PUBLIC FUNCTIONS
+RequestGenerator::RequestGenerator (const std::shared_ptr<RequestBuilder>& req_builder)
+:
+    Module {ModuleType::REQ_GENERATOR},
+    _req_builder {req_builder},
+    _node_chooser {DESC_VALUE_MIN, DescriptorCounter::get()}
+{
+    STATISTICS.add_attribute("serviced requests", "0");
+    STATISTICS.add_attribute("overall requests", "0");
+    STATISTICS.add_attribute("serviced/overall request ratio", "0");
+}
+
+
 const std::shared_ptr<Request> RequestGenerator::get_request() const
 {
     _update_rng_params();
@@ -35,6 +47,9 @@ const std::shared_ptr<Request> RequestGenerator::get_request() const
     } while (node_start == node_dest);
 
     auto req = _req_builder->make_request(node_start, node_dest);
+
+    auto overall = STATISTICS.attribute_as<unsigned>("overall requests");
+    STATISTICS["overall requests"] = std::to_string(overall + 1);
 
     BOOST_LOG_TRIVIAL(info) << "RequestGenerator: got a request: " << *req;
 

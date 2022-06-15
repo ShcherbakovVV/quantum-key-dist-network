@@ -1,17 +1,13 @@
 #include "KeyGenerationModel.hpp"
 #include "Network.hpp"
 #include "Pathfinder.hpp"
-#include "PropertyTable.hpp"
 
 
 Metrics Pathfinder::link_metrics(Descriptor link) const
 {
     PROP_TABLE(link);  // checking
 
-    auto key_data = dynamic_cast<const KeyGenerationModel&>
-                        (network()[ModuleType::KEY_GEN_MODEL].access()).key_data(link);
-
-    return _metrics_policy->metrics(key_data);
+    return _metrics_policy->metrics(link);
 }
 
 

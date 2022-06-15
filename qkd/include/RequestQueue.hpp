@@ -2,7 +2,6 @@
 #define REQUEST_QUEUE_HPP
 
 #include <memory>
-#include <optional>
 #include <queue>
 #include <stdexcept>
 #include <type_traits>
@@ -18,7 +17,7 @@ public:
     virtual ~RequestQueue () {}
     
     virtual bool push_request(std::shared_ptr<Request>&) = 0;
-    virtual std::optional<std::shared_ptr<Request>> pop_request() = 0;
+    virtual std::shared_ptr<Request> pop_request() = 0;
 };
 
 
@@ -28,7 +27,7 @@ class LimitedQueueTrait
 protected:
     const size_t _capacity;
 
-    virtual bool _try_push_request(Queue&, std::shared_ptr<Req>&);
+    bool _try_push_request(Queue&, std::shared_ptr<Req>&);
 
 public:
     LimitedQueueTrait (size_t cap)
@@ -46,7 +45,7 @@ class LimitedQueueTrait<Req, std::vector<std::shared_ptr<Req>>>
 protected:
     const size_t _capacity;
 
-    virtual bool _try_push_request(std::vector<std::shared_ptr<Req>>&, std::shared_ptr<Req>&);
+    bool _try_push_request(std::vector<std::shared_ptr<Req>>&, std::shared_ptr<Req>&);
 
 public:
     LimitedQueueTrait (size_t cap)
@@ -87,7 +86,7 @@ bool LimitedQueueTrait<Req, std::vector<std::shared_ptr<Req>>>::
 class TimedQueueTrait
 {
 protected:
-    virtual bool _try_pop_request(const std::shared_ptr<Request>& req);
+    bool _try_pop_request(const std::shared_ptr<Request>& req);
 };
 
 #endif  // REQUEST_QUEUE_HPP

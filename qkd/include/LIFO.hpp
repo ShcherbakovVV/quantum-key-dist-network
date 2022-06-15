@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "RequestQueue.hpp"
+#include "Statistics.hpp"
 
 
 class LIFO : public RequestQueue
@@ -20,7 +21,7 @@ protected:
 
 public:
     virtual bool push_request(std::shared_ptr<Request>&) override;
-    virtual std::optional<std::shared_ptr<Request>> pop_request() override;
+    virtual std::shared_ptr<Request> pop_request() override;
 };
 
 
@@ -45,7 +46,7 @@ class TimedLIFO
     public TimedQueueTrait
 {
 public:
-    virtual std::optional<std::shared_ptr<Request>> pop_request() override;                                            
+    virtual std::shared_ptr<Request> pop_request() override;                                            
 };
 
 

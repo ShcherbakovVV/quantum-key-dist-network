@@ -16,19 +16,19 @@ bool QueueManager::enqueue(std::shared_ptr<Request>& req)
 }
 
 
-std::optional<std::shared_ptr<Request>> QueueManager::dequeue()
+std::shared_ptr<Request> QueueManager::dequeue()
 {
-    std::optional<std::shared_ptr<Request>> req_opt;
+    std::shared_ptr<Request> req;
     try {
-        req_opt = _req_queue->pop_request();
+        req = _req_queue->pop_request();
     } catch (std::exception& exc) {
         BOOST_LOG_TRIVIAL(info) << exc.what();
         std::throw_with_nested(std::runtime_error {"Invalid request type usage"});
     }
-    if (req_opt)
+    if (req)
     {
-        BOOST_LOG_TRIVIAL(info) << "QueueManager: dequeued a request: " << *(req_opt.value());
-        return req_opt;
+        BOOST_LOG_TRIVIAL(info) << "QueueManager: dequeued a request: " << *req;
+        return req;
     }
     BOOST_LOG_TRIVIAL(warning) << "QueueManager: dequeue dismiss";
     return {};

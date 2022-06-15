@@ -1,5 +1,6 @@
 #include "RequestBuilder.hpp"
 
+
 // PUBLIC FUNCTIONS
 std::shared_ptr<Request> 
 RequestBuilder::make_request(Descriptor start, Descriptor dest) const
@@ -18,7 +19,6 @@ RequestBuilder::operator()(Descriptor start, Descriptor dest) const
 std::shared_ptr<Request> 
 TimedRequestBuilder::make_request(Descriptor start, Descriptor dest) const
 {
-    //auto now = TimePoint::clock::now();
     auto now = Clock::now();
     auto req = std::make_shared<TimedRequest>(start, dest, 
                                               now, now + _req_lifetime);
@@ -37,7 +37,6 @@ PriorityRequestBuilder::make_request(Descriptor start, Descriptor dest) const
 std::shared_ptr<Request> 
 TimedPriorityRequestBuilder::make_request(Descriptor start, Descriptor dest) const
 {
-    //auto now = TimePoint::clock::now();
     auto now = Clock::now();
     auto req = std::make_shared<TimedPriorityRequest>(start, dest, 
                                                       now, now + _req_lifetime,

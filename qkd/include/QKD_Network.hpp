@@ -70,11 +70,10 @@ void QKD_Network::simulation(Caller& caller, ArrivalDistrib& arrival, ServiceDis
         }
         if (qman.access().service(service))
         {
-            auto req_opt = qman.access().dequeue();
-            if (!req_opt)
+            auto req = qman.access().dequeue();
+            if (!req)
                 continue;
 
-            const auto& req = req_opt.value();
             auto path = pfind.access().get_path(req->start_node, req->dest_node);
 
             if (kgen.access().utilize_keys(path))
@@ -82,8 +81,6 @@ void QKD_Network::simulation(Caller& caller, ArrivalDistrib& arrival, ServiceDis
                 auto serviced = STATISTICS.attribute_as<unsigned>("serviced requests");
                 STATISTICS["serviced requests"] = std::to_string(serviced + 1);
             }
-            auto overall = STATISTICS.attribute_as<unsigned>("overall requests");
-            STATISTICS["overall requests"] = std::to_string(overall + 1);
         }
     }
     if (caller.is_stopped())

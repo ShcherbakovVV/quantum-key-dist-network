@@ -2,12 +2,12 @@
 #define FIFO_HPP
 
 #include <memory>
-#include <optional>
 #include <queue>
 #include <stdexcept>
 #include <utility>
 
 #include "RequestQueue.hpp"
+#include "Statistics.hpp"
 
 
 class FIFO : public RequestQueue
@@ -21,7 +21,7 @@ protected:
     
 public:   
     virtual bool push_request(std::shared_ptr<Request>&) override;
-    virtual std::optional<std::shared_ptr<Request>> pop_request() override;
+    virtual std::shared_ptr<Request> pop_request() override;
 };
 
 
@@ -46,7 +46,7 @@ class TimedFIFO
     public TimedQueueTrait
 {
 public:
-    virtual std::optional<std::shared_ptr<Request>> pop_request() override;
+    virtual std::shared_ptr<Request> pop_request() override;
 };
 
 

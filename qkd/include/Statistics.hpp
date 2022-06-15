@@ -23,6 +23,8 @@ public:
 
     void ignore_attribute(const std::string&);
 
+    void reset();
+
     std::string& operator[](const std::string&);
     const std::string& operator[](const std::string&) const;
 

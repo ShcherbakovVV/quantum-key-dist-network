@@ -40,6 +40,6 @@ set(OBJ_SRC "${SRC_DIR}/AdjacencyMatrix.cpp"
 add_library(OBJ OBJECT ${OBJ_SRC})
 target_link_libraries(OBJ ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} ${GTKMM_LIBRARIES})
 
-add_executable(qkd "${SRC_DIR}/Application.cpp")
-target_link_libraries(qkd OBJ ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} ${GTKMM_LIBRARIES})
+add_executable(app "${SRC_DIR}/Application.cpp")
+target_link_libraries(app OBJ ${CMAKE_THREAD_LIBS_INIT} ${Boost_LIBRARIES} ${GTKMM_LIBRARIES})
 

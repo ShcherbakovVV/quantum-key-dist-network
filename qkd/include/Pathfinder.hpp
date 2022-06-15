@@ -23,19 +23,16 @@ struct MetricsPolicy
 {
     virtual ~MetricsPolicy () {}
 
-    virtual Metrics metrics(KeyData) const = 0;
+    virtual Metrics metrics(Descriptor) const = 0;
 };
 
 
 struct KeyAmountMetricsPolicy : MetricsPolicy
 {
-    virtual Metrics metrics(KeyData kdata) const { return kdata.amount; }
-};
-
-
-struct KeyRateMetricsPolicy : MetricsPolicy
-{
-    virtual Metrics metrics(KeyData kdata) const { return kdata.rate; }
+    virtual Metrics metrics(Descriptor link) const
+    {
+        return PROP_TABLE.property_as<KeyAmount>(link, "key amount");
+    }
 };
 
 

@@ -1,5 +1,4 @@
 #include "LIFO.hpp"
-#include "RequestQueue.hpp"
 
 
 bool LIFO::push_request(std::shared_ptr<Request>& req) 
@@ -9,14 +8,14 @@ bool LIFO::push_request(std::shared_ptr<Request>& req)
 }
 
 
-std::optional<std::shared_ptr<Request>> LIFO::pop_request()
+std::shared_ptr<Request> LIFO::pop_request()
 {
     if (_queue.empty())
         return {};
 
-    auto req = std::move(_queue.top());
+    auto req = _queue.top();
     _queue.pop();
-    return {req};
+    return req;
 }
 
 
@@ -26,11 +25,11 @@ bool LimitedLIFO::push_request(std::shared_ptr<Request>& req)
 }  
 
 
-std::optional<std::shared_ptr<Request>> TimedLIFO::pop_request()
+std::shared_ptr<Request> TimedLIFO::pop_request()
 {
-    auto req_opt = LIFO::pop_request();
-    if (req_opt && _try_pop_request(req_opt.value()))
-        return req_opt;
+    auto req = LIFO::pop_request();
+    if (req && _try_pop_request(req))
+        return req;
 
     return {};
 }

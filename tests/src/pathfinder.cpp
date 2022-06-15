@@ -48,7 +48,7 @@ int main()
 
 
     auto algorithm = std::make_shared<DijkstraShortestPath>();
-    auto metrics_policy1 = std::make_shared<KeyRateMetricsPolicy>();
+    auto metrics_policy1 = std::make_shared<KeyAmountMetricsPolicy>();
     auto pathfinder1 = std::make_shared<Pathfinder>(algorithm, metrics_policy1);
     network.connect_module(ModuleType::PATHFINDER, pathfinder1);
 
@@ -172,7 +172,7 @@ int main()
 
     network.disconnect_module(ModuleType::PATHFINDER);
 
-    auto metrics_policy3 = std::make_shared<KeyRateMetricsPolicy>();
+    auto metrics_policy3 = std::make_shared<KeyAmountMetricsPolicy>();
     auto pathfinder3 = std::make_shared<Pathfinder>(algorithm, metrics_policy3);
     network.connect_module(ModuleType::PATHFINDER, pathfinder3);
 

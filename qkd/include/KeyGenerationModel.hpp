@@ -47,8 +47,6 @@ public:
     virtual KeyGenerationModel&       access()       override { return *this; }
     virtual const KeyGenerationModel& access() const override { return *this; }
 
-    virtual KeyData key_data(Descriptor) const;
-
     virtual void generate_keys();
     virtual bool utilize_keys(const Path&);
 };

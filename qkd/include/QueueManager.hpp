@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <memory>
-#include <optional>
 #include <queue>
 #include <stdexcept>
 #include <utility>
@@ -42,7 +41,7 @@ public:
     virtual const QueueManager& access() const override { return *this; }
 
     virtual bool enqueue(std::shared_ptr<Request>& req);
-    virtual std::optional<std::shared_ptr<Request>> dequeue();
+    virtual std::shared_ptr<Request> dequeue();
 };
 
 

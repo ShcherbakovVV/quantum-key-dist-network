@@ -8,7 +8,7 @@ bool RandomQueue::push_request(std::shared_ptr<Request>& req)
 }
 
 
-std::optional<std::shared_ptr<Request>> RandomQueue::pop_request()
+std::shared_ptr<Request> RandomQueue::pop_request()
 {
     if (_queue.empty())
         return {};
@@ -17,9 +17,9 @@ std::optional<std::shared_ptr<Request>> RandomQueue::pop_request()
     auto rand_elem = _rng();
 
     auto iter = std::find(_queue.begin(), _queue.end(), _queue.at(rand_elem));
-    auto ret = std::move(*iter);
+    auto req = *iter;
     _queue.erase(iter);
-    return {ret};
+    return req;
 }
 
 
@@ -29,11 +29,11 @@ bool LimitedRandomQueue::push_request(std::shared_ptr<Request>& req)
 }
 
 
-std::optional<std::shared_ptr<Request>> TimedRandomQueue::pop_request()
+std::shared_ptr<Request> TimedRandomQueue::pop_request()
 {
-    auto ret = RandomQueue::pop_request();
-    if (ret && _try_pop_request(ret.value()))
-        return ret;
-
+    auto req = RandomQueue::pop_request();
+    if (req && _try_pop_request(req))
+            return req;
+    
     return {};
 }

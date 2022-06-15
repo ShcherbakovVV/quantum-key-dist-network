@@ -60,9 +60,6 @@ std::string QKD_Network::_to_graphviz(std::optional<Path> path_opt) const
 // PUBLIC FUNCTIONS
 QKD_Network::QKD_Network ()
 {
-    STATISTICS.add_attribute("serviced requests", "0");
-    STATISTICS.add_attribute("overall requests", "0");
-    STATISTICS.add_attribute("serviced/overall request ratio", "0");
     STATISTICS.add_attribute("completion ratio", "0");
     STATISTICS.ignore_attribute("completion ratio");
 }

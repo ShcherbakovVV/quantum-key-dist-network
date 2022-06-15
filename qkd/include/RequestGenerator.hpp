@@ -17,6 +17,7 @@
 #include "Request.hpp"
 #include "RequestBuilder.hpp"
 #include "RNG.hpp"
+#include "Statistics.hpp"
 
 
 class RequestGenerator : public Module
@@ -32,12 +33,7 @@ private:
     Descriptor _random_node() const;
     
 public:
-    RequestGenerator (const std::shared_ptr<RequestBuilder>& req_builder)
-    :
-        Module {ModuleType::REQ_GENERATOR},
-        _req_builder {req_builder},
-        _node_chooser {DESC_VALUE_MIN, DescriptorCounter::get()}
-    {}
+    RequestGenerator (const std::shared_ptr<RequestBuilder>&);
     
     template<typename ArrivalDistrib>
     bool arrival(const ArrivalDistrib&);

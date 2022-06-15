@@ -8,14 +8,14 @@ bool FIFO::push_request(std::shared_ptr<Request>& req)
 }
 
 
-std::optional<std::shared_ptr<Request>> FIFO::pop_request()
+std::shared_ptr<Request> FIFO::pop_request()
 {
     if (_queue.empty())
         return {};
 
-    auto ret = std::move(_queue.front());
+    auto req = _queue.front();
     _queue.pop();
-    return {ret};
+    return req;
 }
 
 
@@ -25,11 +25,11 @@ bool LimitedFIFO::push_request(std::shared_ptr<Request>& req)
 }
 
 
-std::optional<std::shared_ptr<Request>> TimedFIFO::pop_request()
+std::shared_ptr<Request> TimedFIFO::pop_request()
 {
-    auto ret = FIFO::pop_request();
-    if (ret && _try_pop_request(ret.value()))
-        return ret;
-
+    auto req = FIFO::pop_request();
+    if (req && _try_pop_request(req))
+        return req;
+    
     return {};
 }

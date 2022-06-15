@@ -3,13 +3,13 @@
 
 #include <cstddef>
 #include <memory>
-#include <optional>
 #include <stdexcept>
 #include <vector>
 #include <utility>
 
 #include "RequestQueue.hpp"
 #include "RNG.hpp"
+#include "Statistics.hpp"
 
 
 class RandomQueue : public RequestQueue
@@ -24,7 +24,7 @@ protected:
     
 public:   
     virtual bool push_request(std::shared_ptr<Request>&) override;
-    virtual std::optional<std::shared_ptr<Request>> pop_request() override;
+    virtual std::shared_ptr<Request> pop_request() override;
 };
 
 
@@ -49,7 +49,7 @@ class TimedRandomQueue
     public TimedQueueTrait
 {
 public:
-    virtual std::optional<std::shared_ptr<Request>> pop_request() override;
+    virtual std::shared_ptr<Request> pop_request() override;
 };
 
 
