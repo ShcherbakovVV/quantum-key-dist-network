@@ -41,13 +41,13 @@ int main()
 
     auto n0 = topology->access().add_node();
     auto n1 = topology->access().add_node();
-    [[maybe_unused]] auto l2 = topology->access().add_link(n0, n1);
+    [[maybe_unused]] auto l2 = topology->access().add_link(n0, n1, {{"distance", "11"}});
     auto n3 = topology->access().add_node();
-    auto l4 = topology->access().add_link(n1, n3);
+    auto l4 = topology->access().add_link(n1, n3, {{"distance", "10"}});
     auto n5 = topology->access().add_node();
-    [[maybe_unused]] auto l6 = topology->access().add_link(n3, n5);
+    [[maybe_unused]] auto l6 = topology->access().add_link(n3, n5, {{"distance", "13"}});
     auto n7 = topology->access().add_node();
-    auto l8 = topology->access().add_link(n3, n7);
+    auto l8 = topology->access().add_link(n3, n7, {{"distance", "10"}});
 
     for (size_t i = 0; i != 30; ++i)
     {

@@ -8,18 +8,30 @@
 // PRIVATE FUNCTIONS
 double KeyGenerationModel::_get_alpha(Distance x)
 {
+    if (x <= 0)
+        throw std::logic_error {"KeyGenerationModel: zero or negative distance"};
+    
+    if (x > 0 && x <= 1)
+        return 36.7;
+    
     return -6.02*std::log(x) + 36.7;
 }
 
 
 double KeyGenerationModel::_get_beta(Distance x)
 {
+    if (x <= 0)
+        throw std::logic_error {"KeyGenerationModel: zero or negative distance"};
+    
     return 3.83*0.0001*x*x + 3.74*0.01*x + 2.06;
 }
 
 
 double KeyGenerationModel::_get_scale(Distance x)
 {
+    if (x <= 0)
+        throw std::logic_error {"KeyGenerationModel: zero or negative distance"};
+    
     return -2.77*0.001*x*x - 8.75*0.01*x + 62;
 }
 // END OF PRIVATE FUNCTIONS
@@ -47,16 +59,15 @@ void KeyGenerationModel::generate_keys()
             auto distance = PROP_TABLE.property_as<double>(link, "distance");
 
             auto alpha = _get_alpha(distance);
-            auto beta = _get_alpha(distance);
+            auto beta = _get_beta(distance);
             auto scale = _get_scale(distance);
             _key_gen->reset_params(alpha, beta);
-
+            
             amount += (rate / QUANTUM_KEY_LENGTH_BITS);
-            //BOOST_LOG_TRIVIAL(info) << rate;
             rate = scale * (*_key_gen)() * time_passed / time_factor;
             
-            PROP_TABLE(link, "key amount") = to_string_with_precision(amount, 6);
-            PROP_TABLE(link, "key rate, bps") = to_string_with_precision(rate, 6);
+            PROP_TABLE(link, "key amount") = to_string_with_precision(amount, 6, ',');
+            PROP_TABLE(link, "key rate, bps") = to_string_with_precision(rate, 6, ',');
         }
     }
     if (links != 0 && time_passed != 0)

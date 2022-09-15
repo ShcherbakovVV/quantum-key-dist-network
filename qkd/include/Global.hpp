@@ -6,6 +6,7 @@
 #include <ctime>
 #include <ios>
 #include <limits>
+#include <locale>
 #include <random>
 #include <sstream>
 
@@ -30,6 +31,21 @@ private:
 
 public:
     static TimePoint now() { return Clock::_now; }
+};
+
+
+class SetDecimalPoint final : public std::numpunct<char> 
+{
+private:
+    char _decimal_point;
+    
+public:
+    SetDecimalPoint(char decpoint = '.')
+    :
+        _decimal_point {decpoint}
+    {}
+    
+    char do_decimal_point() const { return _decimal_point; }
 };
 // END OF TYPEDEFS
 
@@ -75,11 +91,14 @@ bool pair_contains(const std::pair<T1, T2>& pair, T1 first, T2 second)
 template<typename T>
 concept ConvertibleToString = requires(T t) { std::to_string(t); };
 
+
 template<ConvertibleToString T>
-std::string to_string_with_precision(T t, std::streamsize prec)
+std::string to_string_with_precision(T t, std::streamsize prec, char decpoint)
 {
     std::stringstream strstrm {};
     strstrm.precision(prec);
+    
+    strstrm.imbue(std::locale {strstrm.getloc(), new SetDecimalPoint {decpoint}});
 
     strstrm << t;
     

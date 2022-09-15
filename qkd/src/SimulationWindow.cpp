@@ -13,7 +13,12 @@ int stoi10(const std::string& str, size_t* pos = nullptr)
 // PUBLIC FUNCTIONS
 ErrorDialog::ErrorDialog (Gtk::Window& parent, const char* message, const char* secondary)
 :
-    Gtk::MessageDialog {parent, message, true, Gtk::MessageType::ERROR, Gtk::ButtonsType::CLOSE, true}
+    Gtk::MessageDialog {parent, 
+                        message, 
+                        true, 
+                        Gtk::MessageType::MESSAGE_ERROR, 
+                        Gtk::ButtonsType::BUTTONS_CLOSE, 
+                        true}
 {
     set_title("Error");
     set_secondary_text(secondary);
@@ -27,9 +32,15 @@ ErrorDialog::ErrorDialog (Gtk::Window& parent, const char* message, const char* 
 // PRIVATE FUNCTIONS
 void SimulationWindow::simulation_setup()
 {
-    wnd_box.append(sim_frame);
-    sim_frame.set_child(sim_grid);
-    sim_frame.set_label_align(Gtk::Align::CENTER);
+    wnd_box.pack_start(sim_frame);
+    
+    sim_frame.add(sim_grid);
+    sim_frame.set_label_align(Gtk::ALIGN_CENTER);
+    sim_frame.set_vexpand(false);
+    sim_frame.set_margin_top(5);
+    sim_frame.set_margin_start(5);
+    sim_frame.set_margin_end(5);
+    
     sim_grid.set_column_spacing(10);
     sim_grid.set_column_homogeneous(true);
 
@@ -55,20 +66,31 @@ void SimulationWindow::simulation_setup()
     sim_step_entry_grid.attach(sim_step_entry, 0, 0);
     sim_step_entry_grid.attach(sim_step_entry_combo, 1, 0);
 
-    sim_time_label.set_margin(10);
-    sim_time_label.set_margin_bottom(0);
-    sim_time_entry.set_margin(10);
-    sim_time_entry.set_margin_bottom(0);
-    sim_time_entry.set_margin_end(5);
-    sim_time_entry_combo.set_margin(10);
-    sim_time_entry_combo.set_margin_bottom(0);
+    sim_time_label.set_margin_top(5);
+    sim_time_label.set_margin_start(5);
+    sim_time_label.set_margin_end(5);
+    
+    sim_time_entry.set_margin_top(5);
+    sim_time_entry.set_margin_start(5);
+    
+    sim_time_entry_combo.set_margin_top(5);
     sim_time_entry_combo.set_margin_start(5);
-    sim_step_label.set_margin(10);
-    sim_step_entry.set_margin(10);
-    sim_step_entry.set_margin_end(5);
-    sim_step_entry_combo.set_margin(10);
-    sim_step_entry_combo.set_margin_bottom(10);
+    sim_time_entry_combo.set_margin_end(5);
+
+    sim_step_label.set_margin_top(5);
+    sim_step_label.set_margin_bottom(5);
+    sim_step_label.set_margin_start(5);
+    sim_step_label.set_margin_end(5);
+    
+    sim_step_entry.set_margin_top(5);
+    sim_step_entry.set_margin_bottom(5);
+    sim_step_entry.set_margin_start(5);
+    
+    sim_step_entry_combo.set_margin_top(5);
+    sim_step_entry_combo.set_margin_bottom(5);
     sim_step_entry_combo.set_margin_start(5);
+    sim_step_entry_combo.set_margin_end(5);
+    
     sim_grid.attach(sim_time_label, 0, 0);
     sim_grid.attach(sim_time_entry_grid, 1, 0);
     sim_grid.attach(sim_step_label, 0, 1);
@@ -78,9 +100,15 @@ void SimulationWindow::simulation_setup()
 
 void SimulationWindow::queueing_setup()
 {
-    wnd_box.append(queue_frame);
-    queue_frame.set_child(queue_grid);
-    queue_frame.set_label_align(Gtk::Align::CENTER);
+    wnd_box.pack_start(queue_frame);
+    
+    queue_frame.add(queue_grid);
+    queue_frame.set_label_align(Gtk::ALIGN_CENTER);
+    queue_frame.set_vexpand(false);
+    queue_frame.set_margin_top(5);
+    queue_frame.set_margin_start(5);
+    queue_frame.set_margin_end(5);
+    
     queue_grid.set_column_spacing(10);
     queue_grid.set_column_homogeneous(true);
 
@@ -100,26 +128,51 @@ void SimulationWindow::queueing_setup()
     req_life_entry_grid.attach(req_life_entry, 0, 0);
     req_life_entry_grid.attach(req_life_entry_combo, 1, 0);
 
-    queue_type_label.set_margin(10);
-    queue_type_label.set_margin_bottom(0);
-    queue_type_combo.set_margin(10);
-    queue_type_combo.set_margin_bottom(0);
-    queue_cap_label.set_margin(10);
-    queue_cap_label.set_margin_bottom(0);
-    queue_cap_entry.set_margin(10);
-    queue_cap_entry.set_margin_bottom(0);
-    req_life_label.set_margin(10);
-    req_life_entry.set_margin(10);
-    req_life_entry_combo.set_margin(10);
-    req_life_entry_combo.set_margin_start(0);
-    req_arr_label.set_margin(10);
-    req_arr_label.set_margin_top(0);
-    req_arr_label.set_margin_bottom(0);
-    req_arr_entry.set_margin(10);
-    req_arr_entry.set_margin_top(0);
-    req_arr_entry.set_margin_bottom(0);
-    req_srv_label.set_margin(10);
-    req_srv_entry.set_margin(10);
+    queue_type_label.set_margin_top(5);
+    queue_type_label.set_margin_start(5);
+    queue_type_label.set_margin_end(5);
+    
+    queue_type_combo.set_margin_top(5);
+    queue_type_combo.set_margin_start(5);
+    queue_type_combo.set_margin_end(5);
+    
+    queue_cap_label.set_margin_top(5);
+    queue_cap_label.set_margin_start(5);
+    queue_cap_label.set_margin_end(5);
+    
+    queue_cap_entry.set_margin_top(5);
+    queue_cap_entry.set_margin_start(5);
+    queue_cap_entry.set_margin_end(5);
+    
+    req_life_label.set_margin_top(5);
+    req_life_label.set_margin_start(5);
+    req_life_label.set_margin_end(5);
+    
+    req_life_entry.set_margin_top(5);
+    req_life_entry.set_margin_start(5);
+    
+    req_life_entry_combo.set_margin_top(5);
+    req_life_entry_combo.set_margin_start(5);
+    req_life_entry_combo.set_margin_end(5);
+    
+    req_arr_label.set_margin_top(5);
+    req_arr_label.set_margin_start(5);
+    req_arr_label.set_margin_end(5);
+    
+    req_arr_entry.set_margin_top(5);
+    req_arr_entry.set_margin_start(5);
+    req_arr_entry.set_margin_end(5);
+    
+    req_srv_label.set_margin_top(5);
+    req_srv_label.set_margin_bottom(5);
+    req_srv_label.set_margin_start(5);
+    req_srv_label.set_margin_end(5);
+    
+    req_srv_entry.set_margin_top(5);
+    req_srv_entry.set_margin_bottom(5);
+    req_srv_entry.set_margin_start(5);
+    req_srv_entry.set_margin_end(5);
+    
     queue_grid.attach(queue_type_label, 0, 0);
     queue_grid.attach(queue_type_combo, 1, 0);
     queue_grid.attach(queue_cap_label, 0, 1);
@@ -135,46 +188,64 @@ void SimulationWindow::queueing_setup()
 
 void SimulationWindow::progress_setup()
 {
-    wnd_box.append(progress_frame);
-    progress_frame.set_label_align(Gtk::Align::CENTER);
-    progress_frame.set_child(progress_box);
+    wnd_box.pack_start(progress_frame);
+    
+    progress_frame.set_label_align(Gtk::ALIGN_CENTER);
+    progress_frame.add(progress_box);
+    queue_frame.set_vexpand(false);
+    progress_frame.set_margin_top(5);
+    progress_frame.set_margin_start(5);
+    progress_frame.set_margin_end(5);
+    
     progress_box.set_spacing(5);
-    progress_box.set_valign(Gtk::Align::FILL);
+    progress_box.set_valign(Gtk::ALIGN_FILL);
 
-    progress_box.append(progressbar);
+    progress_box.pack_start(progressbar);
     progressbar.set_show_text(true);
     progressbar.set_text("0%");
-    progressbar.set_margin(10);
+    progressbar.set_margin_top(5);
+    progressbar.set_margin_bottom(5);
+    progressbar.set_margin_start(5);
+    progressbar.set_margin_end(5);
 
-    progress_box.append(textview);
+    progress_box.pack_start(textview);
     textview.set_editable(false);
-    textview.set_vexpand(true);
-    textview.set_margin(10);
+    textview.set_vexpand(false);
+    textview.set_margin_top(5);
+    textview.set_margin_bottom(5);
+    textview.set_margin_start(5);
+    textview.set_margin_end(5);
 
-    progress_box.append(buttons_box);
+    wnd_box.pack_start(buttons_box);
     buttons_box.set_spacing(5);
     buttons_box.set_homogeneous(true);
-    buttons_box.append(run_button);
-    buttons_box.append(stop_button);
+    buttons_box.pack_start(run_button);
+    buttons_box.pack_start(stop_button);
 
-    run_button.set_margin(10);
-    run_button.set_child(run_button_box);
+    run_button.set_margin_top(5);
+    run_button.set_margin_bottom(5);
+    run_button.set_margin_start(5);
+    run_button.set_margin_end(5);
+    run_button.add(run_button_box);
     run_button.signal_clicked().connect(sigc::mem_fun(*this, &SimulationWindow::on_run_simulation));
-    run_button_box.set_halign(Gtk::Align::CENTER);
+    run_button_box.set_halign(Gtk::ALIGN_CENTER);
     run_button_box.set_spacing(5);
-    run_button_icon.set_from_icon_name("media-playback-start");
-    run_button_box.append(run_button_icon);
-    run_button_box.append(run_button_label);
+    run_button_icon.set_from_icon_name("media-playback-start", Gtk::IconSize {2});
+    run_button_box.pack_start(run_button_icon);
+    run_button_box.pack_start(run_button_label);
 
-    stop_button.set_margin(10);
-    stop_button.set_child(stop_button_box);
+    stop_button.set_margin_top(5);
+    stop_button.set_margin_bottom(5);
+    stop_button.set_margin_start(5);
+    stop_button.set_margin_end(5);
+    stop_button.add(stop_button_box);
     stop_button.set_sensitive(false);
     stop_button.signal_clicked().connect(sigc::mem_fun(*this, &SimulationWindow::on_stop_simulation));
-    stop_button_box.set_halign(Gtk::Align::CENTER);
+    stop_button_box.set_halign(Gtk::ALIGN_CENTER);
     stop_button_box.set_spacing(5);
-    stop_button_icon.set_from_icon_name("media-playback-stop");
-    stop_button_box.append(stop_button_icon);
-    stop_button_box.append(stop_button_label);
+    stop_button_icon.set_from_icon_name("media-playback-stop", Gtk::IconSize {2});
+    stop_button_box.pack_start(stop_button_icon);
+    stop_button_box.pack_start(stop_button_label);
 }
 
 
@@ -243,6 +314,7 @@ void SimulationWindow::on_run_simulation()
 
     } catch (...) {
         auto err_wnd = Gtk::make_managed<ErrorDialog>(*this, "Error", "Incorrect simulation parameters!");
+        wnd_box.add(*err_wnd);
         err_wnd->show();
         run_button.set_sensitive(true);
         stop_button.set_sensitive(false);
@@ -384,29 +456,29 @@ void SimulationWindow::network_setup()
     auto c_rzd       = topology->add_node({{"type", "target"}, {"label", "Ц РЖД"},                     {"x pos", "18"}, {"y pos", "-4.5"}});   // 20
     auto mivc_rzd    = topology->add_node({{"type", "target"}, {"label", "МИВЦ РЖД"},                  {"x pos", "18"}, {"y pos", "-6"}});   // 21
 
-    topology->add_link(nevs_smol,   ats_smol,    {{"distance", "1.4"}});
-    topology->add_link(ats_smol,    ov_ttk,      {{"distance", "8.6"}});
-    topology->add_link(ov_ttk,      ivc_rzd_spb, {{"distance", "3.3"}});
+    topology->add_link(nevs_smol,   ats_smol,    {{"distance", "1,4"}});
+    topology->add_link(ats_smol,    ov_ttk,      {{"distance", "8,6"}});
+    topology->add_link(ov_ttk,      ivc_rzd_spb, {{"distance", "3,3"}});
     topology->add_link(okt_zd,      ivc_rzd_spb, {{"distance", "3"}});
     topology->add_link(ivc_rzd_spb, tosno,       {{"distance", "55"}});
-    topology->add_link(tosno,       chudovo,     {{"distance", "86.7"}});
-    topology->add_link(chudovo,     mvishera,    {{"distance", "72.3"}});
+    topology->add_link(tosno,       chudovo,     {{"distance", "86,7"}});
+    topology->add_link(chudovo,     mvishera,    {{"distance", "72,3"}});
     topology->add_link(mvishera,    torbino,     {{"distance", "59"}});
-    topology->add_link(torbino,     uglovka,     {{"distance", "71.6"}});
-    topology->add_link(uglovka,     bologoe,     {{"distance", "59.1"}});
+    topology->add_link(torbino,     uglovka,     {{"distance", "71,6"}});
+    topology->add_link(uglovka,     bologoe,     {{"distance", "59,1"}});
     topology->add_link(kalininsky,  udomlya,     {{"distance", "4"}});
-    topology->add_link(udomlya,     bologoe,     {{"distance", "78.4"}});
-    topology->add_link(bologoe,     vvolochek,   {{"distance", "54.9"}});
-    topology->add_link(vvolochek,   spirovo,     {{"distance", "38.7"}});
+    topology->add_link(udomlya,     bologoe,     {{"distance", "78,4"}});
+    topology->add_link(bologoe,     vvolochek,   {{"distance", "54,9"}});
+    topology->add_link(vvolochek,   spirovo,     {{"distance", "38,7"}});
     topology->add_link(spirovo,     likhoslavl,  {{"distance", "53"}});
-    topology->add_link(likhoslavl,  tver,        {{"distance", "53.2"}});
-    topology->add_link(tver,        zavidovo,    {{"distance", "55.5"}});
-    topology->add_link(zavidovo,    klin,        {{"distance", "24.9"}});
-    topology->add_link(klin,        kryukovo,    {{"distance", "52.2"}});
-    topology->add_link(kryukovo,    gvc_rzd,     {{"distance", "45.6"}});
-    topology->add_link(gvc_rzd,     m9,          {{"distance", "17.1"}});
-    topology->add_link(gvc_rzd,     c_rzd,       {{"distance", "0.5"}});
-    topology->add_link(gvc_rzd,     mivc_rzd,    {{"distance", "1.3"}});
+    topology->add_link(likhoslavl,  tver,        {{"distance", "53,2"}});
+    topology->add_link(tver,        zavidovo,    {{"distance", "55,5"}});
+    topology->add_link(zavidovo,    klin,        {{"distance", "24,9"}});
+    topology->add_link(klin,        kryukovo,    {{"distance", "52,2"}});
+    topology->add_link(kryukovo,    gvc_rzd,     {{"distance", "45,6"}});
+    topology->add_link(gvc_rzd,     m9,          {{"distance", "17,1"}});
+    topology->add_link(gvc_rzd,     c_rzd,       {{"distance", "0,5"}});
+    topology->add_link(gvc_rzd,     mivc_rzd,    {{"distance", "1,3"}});
 
     arrivals.reset_params(sim_params.arr_lambda);
     service.reset_params(sim_params.srv_lambda);
@@ -420,7 +492,6 @@ void SimulationWindow::network_simulation()
                                                             sim_params.sim_step, 
                                                             sim_params.sim_time); } };                                                 
     simulation.detach();
-    //qkd_network.simulation(*this, arrivals, service, sim_params.sim_step, sim_params.sim_time);
 }
 // END OF PRIVATE FUNCTIONS
 
@@ -431,10 +502,11 @@ SimulationWindow::SimulationWindow (const char* title, int w, int h)
     set_title(title);
     set_default_size(w, h);
     set_resizable(false);
+    set_vexpand(false);
 
-    set_child(wnd_box);
+    add(wnd_box);
     wnd_box.set_spacing(5);
-    wnd_box.set_margin(5);
+    wnd_box.show_all();
 
     perc_disp.connect(sigc::mem_fun(*this, &SimulationWindow::on_set_percentage));
     end_disp.connect(sigc::mem_fun(*this, &SimulationWindow::on_end_simulation));

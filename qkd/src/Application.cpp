@@ -19,11 +19,10 @@
 #include "SimulationWindow.hpp"
 #include "QKD_Network.hpp"
 
-//namespace bl = boost::log;
-
-
 int main(int argc, char* argv[])
 {
     auto app = Gtk::Application::create("org.gtkmm.QKDsim");
-    return app->make_window_and_run<SimulationWindow>(argc, argv, "QKD Network Simulation", 400, 800);
+    SimulationWindow wnd {"QKD Network Simulation", 400, 400};
+    wnd.show_all();
+    return app->run(wnd, argc, argv);
 }

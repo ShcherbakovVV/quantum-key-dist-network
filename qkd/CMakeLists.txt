@@ -8,7 +8,7 @@ find_package(Threads)
 find_package(Boost COMPONENTS log random)
 find_package(PkgConfig)
 
-pkg_check_modules(GTKMM gtkmm-4.0)
+pkg_check_modules(GTKMM gtkmm-3.0)
 
 include_directories(${GTKMM_INCLUDE_DIRS})
 
