@@ -1,4 +1,4 @@
-``# qkd - Quantum Key Distribution network simulator
+# qkd - Quantum Key Distribution network simulator
 
 ## Overview
 
