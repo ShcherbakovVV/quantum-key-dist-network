@@ -41,7 +41,8 @@ $ cd qkd
 2. Select a compiler.
 **qkd** can be built with:
 * **gcc** (12+);
-* **clang** (14+). 
+* **clang (default)** (14+). 
+
 To choose preferred compiler, edit **build.sh**:
 ```
 CC=gcc \
